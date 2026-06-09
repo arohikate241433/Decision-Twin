@@ -120,21 +120,7 @@ export default function Dashboard() {
     ? timeSeriesData[timeSeriesData.length - 1].disparityRatio > timeSeriesData[0].disparityRatio ? 'up' : 'down'
     : null;
 
-  const STANDARD_FEATURES = ['gender', 'race', 'age_group'];
-  const featureOptions = availableColumns.length > 0
-    ? availableColumns.filter(c => {
-        // prefer categorical-looking columns, exclude obvious numeric/id ones
-        const skip = ['_id', 'id', 'persona_id', 'income', 'credit_score', 'salary', 'score', 'points', 'grade', 'rating'];
-        return !skip.includes(c.toLowerCase());
-      })
-    : STANDARD_FEATURES;
-
-  // Auto-set sensitiveFeature to first valid option if current value isn't in the list
-  useEffect(() => {
-    if (featureOptions.length > 0 && !featureOptions.includes(sensitiveFeature)) {
-      setSensitiveFeature(featureOptions[0]);
-    }
-  }, [featureOptions]);
+  const featureOptions = ['gender', 'race', 'age_group'];
 
   if (isCheckingStatus) {
     return (

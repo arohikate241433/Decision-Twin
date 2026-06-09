@@ -24,23 +24,8 @@ interface TradeoffPoint {
 
 export default function PolicyLab() {
   const { addPolicyLabRecord } = useSimulationStore();
-  const { availableColumns } = useSimulationStore();
 
-  const STANDARD_FEATURES = ['gender', 'race', 'age_group'];
-  const featureOptions = availableColumns.length > 0
-    ? availableColumns.filter(c => {
-        const skip = ['_id', 'id', 'persona_id', 'income', 'credit_score', 'salary', 'score', 'points', 'grade', 'rating'];
-        return !skip.includes(c.toLowerCase());
-      })
-    : STANDARD_FEATURES;
-
-  const [sensitiveFeature, setSensitiveFeature] = useState('');
-
-  useEffect(() => {
-    if (featureOptions.length > 0 && (!sensitiveFeature || !featureOptions.includes(sensitiveFeature))) {
-      setSensitiveFeature(featureOptions[0]);
-    }
-  }, [featureOptions]);
+  const [sensitiveFeature, setSensitiveFeature] = useState('gender');
   const [baseThreshold, setBaseThreshold] = useState(0);
   const [compareThreshold, setCompareThreshold] = useState(15);
   const [simulationData, setSimulationData] = useState<SimulationResult[]>([]);
