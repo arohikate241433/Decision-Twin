@@ -1,6 +1,7 @@
 import os
 import json
 import io
+import joblib
 from fastapi import FastAPI, HTTPException, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -10,6 +11,9 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.preprocessing import LabelEncoder
 from fairlearn.metrics import demographic_parity_difference, demographic_parity_ratio
+
+CUSTOM_MODELS_DIR = "custom_models"
+os.makedirs(CUSTOM_MODELS_DIR, exist_ok=True)
 
 app = FastAPI(title="DecisionTwin API", description="Provides simulation and AI endpoints for DecisionTwin.")
 
@@ -120,7 +124,16 @@ class SimulationRequest(BaseModel):
     model_type: str = "logistic"
 
 def get_model(model_type: str):
-    """Get ML model based on type"""
+    """Get ML model based on type — built-in or custom uploaded"""
+    if model_type.startswith("custom_"):
+        filename = model_type[len("custom_"):]
+        path = os.path.join(CUSTOM_MODELS_DIR, filename)
+        if not os.path.exists(path):
+            raise HTTPException(status_code=404, detail=f"Custom model '{filename}' not found.")
+        try:
+            return joblib.load(path)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to load custom model: {str(e)}")
     if model_type == "random_forest":
         return RandomForestClassifier(n_estimators=50, max_depth=5, random_state=42)
     elif model_type == "decision_tree":
@@ -135,25 +148,35 @@ def run_simulation(data: list, years: int, sensitive_feature: str, threshold_adj
     if sensitive_feature not in df.columns:
         raise HTTPException(status_code=400, detail=f"Sensitive feature '{sensitive_feature}' not found in dataset. Available: {list(df.columns)}")
     
+    # Auto-detect a numeric score column to use as the approval basis
+    score_col = None
+    preferred = ['credit_score', 'score', 'rating', 'income', 'salary', 'grade', 'points']
+    for name in preferred:
+        if name in df.columns and pd.api.types.is_numeric_dtype(df[name]):
+            score_col = name
+            break
+    if score_col is None:
+        numeric_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c]) and c != sensitive_feature]
+        if not numeric_cols:
+            raise HTTPException(status_code=400, detail="Dataset has no numeric column to base approval decisions on.")
+        score_col = numeric_cols[0]
+
     for col in df.columns:
         if not pd.api.types.is_numeric_dtype(df[col]):
             df[col] = pd.factorize(df[col])[0]
     
     sensitive_vals = df[sensitive_feature]
-    
-    drift_penalty_per_year = 4.0
+    score_min, score_max = df[score_col].min(), df[score_col].max()
+    # Normalize approval threshold to the actual score column range
+    score_range = score_max - score_min if score_max != score_min else 1
+    base_threshold = score_min + score_range * 0.6  # approve top 40%
+    drift_penalty_per_year = score_range * 0.02  # 2% of range per year
+
     synthetic_targets = []
-    
     for i, row in df.iterrows():
-        base_score = float(row['credit_score'])
-        
-        if row[sensitive_feature] == 0:
-            year_penalty = years * drift_penalty_per_year
-        else:
-            year_penalty = 0
-            
-        approval_threshold = 650.0 - threshold_adjustment + year_penalty
-        
+        base_score = float(row[score_col])
+        year_penalty = (years * drift_penalty_per_year) if row[sensitive_feature] == 0 else 0
+        approval_threshold = base_threshold - threshold_adjustment * (score_range / 100) + year_penalty
         synthetic_targets.append(1 if base_score > approval_threshold else 0)
         
     df['synthetic_target'] = synthetic_targets
@@ -313,6 +336,65 @@ async def ingest_data(
         
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to ingest data: {str(e)}")
+
+
+@app.post("/upload-model")
+async def upload_model(file: UploadFile = File(...)):
+    """Upload a custom sklearn-compatible .pkl model for comparison"""
+    if not file.filename.endswith(".pkl"):
+        raise HTTPException(status_code=400, detail="Only .pkl files are supported.")
+    content = await file.read()
+    save_path = os.path.join(CUSTOM_MODELS_DIR, file.filename)
+    # Write to disk first — joblib requires a real file path to load reliably
+    with open(save_path, "wb") as f:
+        f.write(content)
+    # Validate it's a loadable sklearn-compatible model
+    try:
+        model = joblib.load(save_path)
+        if not (hasattr(model, 'fit') and hasattr(model, 'predict')):
+            os.remove(save_path)
+            raise HTTPException(status_code=400, detail="File is not a valid sklearn model (must have fit and predict methods).")
+    except HTTPException:
+        raise
+    except Exception as e:
+        os.remove(save_path)
+        raise HTTPException(status_code=400, detail=f"Could not load model: {str(e)}")
+    return {"status": "success", "filename": file.filename, "model_type": f"custom_{file.filename}"}
+
+
+@app.get("/custom-models")
+def list_custom_models():
+    """List all uploaded custom models"""
+    files = [f for f in os.listdir(CUSTOM_MODELS_DIR) if f.endswith(".pkl")]
+    return {
+        "status": "success",
+        "models": [{"filename": f, "model_type": f"custom_{f}", "name": f.replace(".pkl", "").replace("_", " ")} for f in files]
+    }
+
+
+@app.delete("/custom-models/{filename}")
+def delete_custom_model(filename: str):
+    """Delete an uploaded custom model"""
+    path = os.path.join(CUSTOM_MODELS_DIR, filename)
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="Model not found.")
+    os.remove(path)
+    return {"status": "success", "message": f"{filename} deleted."}
+
+
+@app.get("/data-status")
+def data_status():
+    """Check if real ingested data is available and return its columns"""
+    try:
+        with open("mock_personas.json", "r") as f:
+            data = json.load(f)
+        if not data:
+            return {"has_data": False, "columns": [], "row_count": 0, "source": "none"}
+        source = data[0].get("metadata", {}).get("source", "synthetic")
+        columns = list(data[0].get("traits", {}).keys())
+        return {"has_data": True, "columns": columns, "row_count": len(data), "source": source}
+    except FileNotFoundError:
+        return {"has_data": False, "columns": [], "row_count": 0, "source": "none"}
 
 
 @app.get("/historical-simulations")

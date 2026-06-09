@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useSimulationStore } from '@/store/useSimulationStore';
 import { API_BASE_URL } from '@/lib/api-config';
-import { Play, ShieldAlert, CheckCircle2, RefreshCw, TrendingUp, TrendingDown } from 'lucide-react';
+import Link from 'next/link';
+import { Play, ShieldAlert, CheckCircle2, RefreshCw, TrendingUp, TrendingDown, Upload, Database } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface SimulationData {
@@ -30,19 +31,40 @@ interface TimeSeriesPoint {
 }
 
 export default function Dashboard() {
-  const { yearsToSimulate, setYearsToSimulate, sensitiveFeature, setSensitiveFeature, thresholdAdjustment, setThresholdAdjustment } = useSimulationStore();
+  const {
+    yearsToSimulate, setYearsToSimulate,
+    sensitiveFeature, setSensitiveFeature,
+    thresholdAdjustment, setThresholdAdjustment,
+    dataSource, setDataSource,
+    availableColumns, setAvailableColumns,
+    rowCount, setRowCount,
+  } = useSimulationStore();
+
   const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesPoint[]>([]);
 
-  const generateData = useMutation({
-    mutationFn: async () => {
-      const res = await fetch(`${API_BASE_URL}/generate-synthetic-data`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ persona_count: 1000, characteristics: ["gender", "race", "income", "credit_score"] })
-      });
-      return res.json();
-    }
+  // Check if real data is loaded
+  const { data: status, isLoading: isCheckingStatus } = useQuery({
+    queryKey: ['data-status'],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE_URL}/data-status`);
+      return res.json() as Promise<{ has_data: boolean; columns: string[]; row_count: number; source: string }>;
+    },
+    refetchOnWindowFocus: true,
   });
+
+  useEffect(() => {
+    if (!status) return;
+    if (status.has_data) {
+      const source = status.source === 'synthetic' || status.source === 'mock' ? 'synthetic' : 'real';
+      setDataSource(source);
+      setAvailableColumns(status.columns);
+      setRowCount(status.row_count);
+    } else {
+      setDataSource('none');
+    }
+  }, [status]);
+
+  const hasData = status?.has_data ?? false;
 
   const { data: simulation, isLoading } = useQuery<SimulationData>({
     queryKey: ['simulate', yearsToSimulate, sensitiveFeature, thresholdAdjustment],
@@ -55,7 +77,7 @@ export default function Dashboard() {
       if (!res.ok) throw new Error(`simulate-bias failed: ${res.status}`);
       return res.json();
     },
-    enabled: generateData.isSuccess,
+    enabled: hasData,
     retry: false,
   });
 
@@ -87,7 +109,6 @@ export default function Dashboard() {
         approvalRate: simulation.metrics.approval_rate_overall * 100,
         parityDiff: simulation.metrics.demographic_parity_difference
       };
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTimeSeriesData(prev => {
         const filtered = prev.filter(p => p.year !== simulation.years_simulated);
         return [...filtered, newPoint].sort((a, b) => a.year - b.year);
@@ -95,49 +116,88 @@ export default function Dashboard() {
     }
   }, [simulation]);
 
-  useEffect(() => {
-    generateData.mutate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const trendDirection = timeSeriesData.length >= 2
-    ? timeSeriesData[timeSeriesData.length - 1].disparityRatio > timeSeriesData[0].disparityRatio
-      ? 'up'
-      : 'down'
+    ? timeSeriesData[timeSeriesData.length - 1].disparityRatio > timeSeriesData[0].disparityRatio ? 'up' : 'down'
     : null;
+
+  const featureOptions = ['gender', 'race', 'age_group'];
+
+  if (isCheckingStatus) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+      </main>
+    );
+  }
+
+  if (!hasData) {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center gap-8 p-8">
+        <div className="glass-card p-12 max-w-lg w-full text-center space-y-6">
+          <div className="w-20 h-20 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto">
+            <Database className="w-10 h-10 text-blue-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-2">No Data Loaded</h2>
+            <p className="text-zinc-400">
+              Upload your real dataset to start simulating bias. Supported formats: CSV, JSON, Parquet.
+            </p>
+            <p className="text-zinc-500 text-sm mt-2">
+              Your data needs columns like a numeric score field and at least one categorical demographic field (e.g. gender, race, age group).
+            </p>
+          </div>
+          <Link
+            href="/ingest"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
+          >
+            <Upload className="w-5 h-5" />
+            Upload Your Dataset
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen p-8 max-w-7xl mx-auto space-y-8">
-      
+
       <header className="flex justify-between items-end border-b border-zinc-800 pb-6">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">DecisionTwin</h1>
           <p className="text-zinc-400">Forensic AI Bias Simulation & Audit Platform</p>
         </div>
-        <div className="flex gap-4">
-          <span className={`px-4 py-2 rounded border flex items-center gap-2 ${generateData.isPending ? 'border-amber-500/50 text-amber-500' : 'border-zinc-800 text-emerald-500'}`}>
-             {generateData.isPending ? <RefreshCw className="animate-spin w-4 h-4" /> : <CheckCircle2 className="w-4 h-4"/>}
-             {generateData.isPending ? 'Generative Engine Thinking...' : 'Gemini 1.5 Sync: Active'}
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-zinc-400">
+            <span className="text-emerald-500 font-mono">{rowCount.toLocaleString()}</span> records loaded
+            {dataSource === 'real' && <span className="ml-2 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-xs">Real Data</span>}
+            {dataSource === 'synthetic' && <span className="ml-2 px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 text-xs">Synthetic</span>}
           </span>
+          <Link
+            href="/ingest"
+            className="px-4 py-2 rounded border border-zinc-700 text-zinc-300 hover:bg-zinc-800 transition-colors flex items-center gap-2 text-sm"
+          >
+            <Upload className="w-4 h-4" />
+            Replace Dataset
+          </Link>
         </div>
       </header>
 
       <div className="grid grid-cols-12 gap-8">
-        
+
         <div className="col-span-12 md:col-span-4 space-y-6">
           <div className="glass-card p-6 flex flex-col space-y-6">
             <h2 className="text-xl font-semibold mb-2">Control Panel</h2>
-            
+
             <div className="space-y-4">
               <label className="block text-sm font-medium text-zinc-400">Sensitive Feature to Track</label>
-              <select 
-                value={sensitiveFeature} 
+              <select
+                value={sensitiveFeature}
                 onChange={(e) => setSensitiveFeature(e.target.value)}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-zinc-300 focus:outline-none focus:border-blue-500"
               >
-                <option value="gender">Gender</option>
-                <option value="race">Race</option>
-                <option value="age_group">Age Group</option>
+                {featureOptions.map(col => (
+                  <option key={col} value={col}>{col}</option>
+                ))}
               </select>
             </div>
 
@@ -146,16 +206,16 @@ export default function Dashboard() {
                 <span>Time-Travel Horizon</span>
                 <span className="text-blue-500 font-mono">Year {yearsToSimulate}</span>
               </label>
-              <input 
-                type="range" 
-                min="1" max="10" 
-                value={yearsToSimulate} 
+              <input
+                type="range"
+                min="1" max="10"
+                value={yearsToSimulate}
                 onChange={(e) => setYearsToSimulate(parseInt(e.target.value))}
                 className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-500 thumb-pulse"
               />
               <p className="text-xs text-zinc-500">Simulate compounding feedback loops year over year.</p>
             </div>
-            
+
             <div className="space-y-4 pt-4 border-t border-zinc-800">
               <label className="block text-sm font-medium text-zinc-400 flex justify-between">
                 <span>Policy Intervention: Threshold Tilt</span>
@@ -163,19 +223,17 @@ export default function Dashboard() {
                   {thresholdAdjustment > 0 ? "+" : ""}{thresholdAdjustment}
                 </span>
               </label>
-              <input 
-                type="range" 
+              <input
+                type="range"
                 min="-50" max="50" step="5"
-                value={thresholdAdjustment} 
+                value={thresholdAdjustment}
                 onChange={(e) => setThresholdAdjustment(parseFloat(e.target.value))}
                 className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
               />
               <p className="text-xs text-zinc-500">Inject policy changes to see What-If trade-offs.</p>
             </div>
-
           </div>
 
-          {/* Trend Indicator */}
           {timeSeriesData.length >= 2 && (
             <div className="glass-card p-4">
               <div className="text-sm text-zinc-400 mb-2">Bias Trend</div>
@@ -204,9 +262,7 @@ export default function Dashboard() {
               <div className="mt-4 flex items-baseline gap-2">
                 {isLoading ? <div className="h-8 w-24 bg-zinc-800 rounded animate-pulse"></div> : (
                   <>
-                    <span className={`text-4xl font-mono font-bold ${
-                      (simulation?.metrics?.demographic_parity_ratio ?? 1) < 0.8 ? 'text-rose-600' : 'text-emerald-500'
-                    }`}>
+                    <span className={`text-4xl font-mono font-bold ${(simulation?.metrics?.demographic_parity_ratio ?? 1) < 0.8 ? 'text-rose-600' : 'text-emerald-500'}`}>
                       {simulation?.metrics?.demographic_parity_ratio || 0.00}
                     </span>
                     <span className="text-sm text-zinc-500">Target &gt; 0.80</span>
@@ -232,7 +288,7 @@ export default function Dashboard() {
             <div className="glass-card p-6">
               <h3 className="text-sm font-medium text-zinc-400">Global Approval Rate</h3>
               <div className="mt-4 flex items-baseline gap-2">
-                 {isLoading ? <div className="h-8 w-24 bg-zinc-800 rounded animate-pulse"></div> : (
+                {isLoading ? <div className="h-8 w-24 bg-zinc-800 rounded animate-pulse"></div> : (
                   <>
                     <span className="text-4xl font-mono font-bold text-blue-500">
                       {((simulation?.metrics?.approval_rate_overall || 0) * 100).toFixed(1)}%
@@ -243,7 +299,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Longitudinal Chart */}
           {timeSeriesData.length > 0 && (
             <div className="glass-card p-6">
               <h3 className="text-lg font-medium border-b border-zinc-800 pb-4 mb-4">Bias Drift Over Time</h3>
@@ -255,36 +310,23 @@ export default function Dashboard() {
                   <Tooltip
                     contentStyle={{ backgroundColor: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px' }}
                     labelFormatter={(v) => `Year ${v}`}
-                    formatter={(value: any) => [typeof value === 'number' ? value.toFixed(4) : value, '']}
+                    formatter={(value: number) => [value.toFixed(4), '']}
                   />
                   <Legend />
                   <Line type="monotone" dataKey="disparityRatio" name="Disparity Ratio" stroke="#ef4444" strokeWidth={2} dot={{ fill: '#ef4444' }} />
                   <Line type="monotone" dataKey="approvalRate" name="Approval %" stroke="#22c55e" strokeWidth={2} dot={{ fill: '#22c55e' }} />
                 </LineChart>
               </ResponsiveContainer>
-              <div className="mt-4 flex items-center gap-4 text-xs text-zinc-500">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-rose-500"></div>
-                  <span>Disparity Ratio (lower = worse)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                  <span>Approval Rate %</span>
-                </div>
-              </div>
             </div>
           )}
 
           <div className="glass-card p-6 flex flex-col min-h-[300px]">
-            <div className="flex justify-between">
-              <h3 className="text-lg font-medium border-b border-zinc-800 pb-4 w-full">Longitudinal Audit Logs & Bias Flags</h3>
-            </div>
-            
+            <h3 className="text-lg font-medium border-b border-zinc-800 pb-4 w-full">Longitudinal Audit Logs & Bias Flags</h3>
             <div className="mt-6 flex-grow">
-              {isLoading || generateData.isPending ? (
+              {isLoading ? (
                 <div className="flex flex-col items-center justify-center h-full space-y-4 pt-10">
-                   <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
-                   <p className="text-zinc-400 text-sm font-mono">Running FairLearn matrices for Year {yearsToSimulate}...</p>
+                  <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+                  <p className="text-zinc-400 text-sm font-mono">Running FairLearn matrices for Year {yearsToSimulate}...</p>
                 </div>
               ) : (
                 <ul className="space-y-4">
@@ -293,21 +335,21 @@ export default function Dashboard() {
                       {flag.severity === 'High' ? <ShieldAlert className="w-5 h-5 flex-shrink-0 mt-0.5" /> : <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />}
                       <div>
                         <strong className="block">{flag.category} (Score: {flag.value})</strong>
-                        <span className="text-sm opacity-80 decoration-zinc-400">
-                          {flag.severity === 'High' 
-                            ? "Compliance violation. The disparate impact ratio is below the legal 80% threshold. Generative insight suggests geographical correlation heavily skews negative decisions towards marginalized applicant profiles as simulation progresses."
-                            : "Within acceptable statistical parity boundaries. No immediate systemic intervention required at this year benchmark."}
+                        <span className="text-sm opacity-80">
+                          {flag.severity === 'High'
+                            ? "Compliance violation. The disparate impact ratio is below the legal 80% threshold."
+                            : "Within acceptable statistical parity boundaries. No immediate systemic intervention required."}
                         </span>
                       </div>
                     </li>
                   ))}
-                   
+
                   <div className="mt-8 p-6 bg-blue-900/10 border border-blue-500/20 rounded font-mono text-sm leading-relaxed text-zinc-300">
-                    <h4 className="flex items-center gap-2 text-blue-400 mb-3"><Play className="w-4 h-4"/> Gemini 1.5 Pro Forensic Summary</h4>
+                    <h4 className="flex items-center gap-2 text-blue-400 mb-3"><Play className="w-4 h-4" /> Gemini 1.5 Pro Forensic Summary</h4>
                     {isReportLoading ? (
-                       <div className="flex items-center gap-2"><RefreshCw className="w-4 h-4 animate-spin"/> Gemini is analyzing 10 years of simulated decisions...</div>
+                      <div className="flex items-center gap-2"><RefreshCw className="w-4 h-4 animate-spin" /> Gemini is analyzing simulated decisions...</div>
                     ) : (
-                       <p>{report?.report || "Audit summary unavailable."}</p>
+                      <p>{report?.report || "Audit summary unavailable."}</p>
                     )}
                   </div>
                 </ul>
