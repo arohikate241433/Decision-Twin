@@ -148,62 +148,119 @@ def get_model(model_type: str):
 
 def run_simulation(data: list, years: int, sensitive_feature: str, threshold_adjustment: float, model):
     """Run bias simulation with given parameters"""
-    df = pd.DataFrame([item["traits"] for item in data])
-    
+    # ── 1. Build DataFrame from traits, flattening any non-scalar values ──
+    rows = []
+    for item in data:
+        flat = {}
+        for k, v in item.get("traits", {}).items():
+            if isinstance(v, (int, float, bool)):
+                flat[k] = v
+            elif isinstance(v, str):
+                flat[k] = v
+            else:
+                # dicts, lists, None → convert to string so pandas doesn't blow up
+                flat[k] = str(v) if v is not None else ""
+        rows.append(flat)
+
+    if not rows:
+        raise HTTPException(status_code=400, detail="Dataset is empty.")
+
+    df = pd.DataFrame(rows)
+
+    # ── 2. Validate sensitive feature ──────────────────────────────────────
     if sensitive_feature not in df.columns:
-        raise HTTPException(status_code=400, detail=f"Sensitive feature '{sensitive_feature}' not found in dataset. Available: {list(df.columns)}")
-    
-    # Auto-detect a numeric score column to use as the approval basis
+        available = [c for c in df.columns]
+        # Try to pick a reasonable fallback (first non-numeric column)
+        cat_cols = [c for c in df.columns if not pd.api.types.is_numeric_dtype(df[c])]
+        if not cat_cols:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Sensitive feature '{sensitive_feature}' not found. Available columns: {available}"
+            )
+        sensitive_feature = cat_cols[0]
+
+    # ── 3. Auto-detect a numeric score column ──────────────────────────────
     score_col = None
-    preferred = ['credit_score', 'score', 'rating', 'income', 'salary', 'grade', 'points']
+    preferred = ['credit_score', 'score', 'rating', 'income', 'salary', 'grade', 'points',
+                 'amount', 'balance', 'value', 'count', 'total', 'price', 'age']
     for name in preferred:
         if name in df.columns and pd.api.types.is_numeric_dtype(df[name]):
             score_col = name
             break
     if score_col is None:
-        numeric_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c]) and c != sensitive_feature]
-        if not numeric_cols:
-            raise HTTPException(status_code=400, detail="Dataset has no numeric column to base approval decisions on.")
-        score_col = numeric_cols[0]
+        numeric_cols = [c for c in df.columns
+                        if pd.api.types.is_numeric_dtype(df[c])
+                        and c != sensitive_feature
+                        and df[c].nunique() > 1]
+        if numeric_cols:
+            score_col = numeric_cols[0]
 
+    # ── 4. If no numeric column exists, synthesize one from text length ────
+    if score_col is None:
+        # Use length of the longest string column as a proxy score
+        str_cols = [c for c in df.columns if df[c].dtype == object and c != sensitive_feature]
+        if str_cols:
+            # pick the column with most variance in length
+            best = max(str_cols, key=lambda c: df[c].astype(str).str.len().std())
+            df['_synthetic_score'] = df[best].astype(str).str.len().astype(float)
+            score_col = '_synthetic_score'
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Dataset has no usable numeric or text column to base approval decisions on."
+            )
+
+    # ── 5. Encode all non-numeric columns ──────────────────────────────────
     for col in df.columns:
         if not pd.api.types.is_numeric_dtype(df[col]):
-            df[col] = pd.factorize(df[col])[0]
-    
+            df[col] = pd.factorize(df[col].astype(str))[0]
+
     sensitive_vals = df[sensitive_feature]
-    score_min, score_max = df[score_col].min(), df[score_col].max()
-    # Normalize approval threshold to the actual score column range
-    score_range = score_max - score_min if score_max != score_min else 1
-    base_threshold = score_min + score_range * 0.6  # approve top 40%
-    drift_penalty_per_year = score_range * 0.02  # 2% of range per year
+
+    score_min = df[score_col].min()
+    score_max = df[score_col].max()
+    score_range = float(score_max - score_min) if score_max != score_min else 1.0
+    base_threshold = score_min + score_range * 0.6
+    drift_penalty_per_year = score_range * 0.02
 
     synthetic_targets = []
-    for i, row in df.iterrows():
+    for _, row in df.iterrows():
         base_score = float(row[score_col])
         year_penalty = (years * drift_penalty_per_year) if row[sensitive_feature] == 0 else 0
         approval_threshold = base_threshold - threshold_adjustment * (score_range / 100) + year_penalty
         synthetic_targets.append(1 if base_score > approval_threshold else 0)
-        
+
     df['synthetic_target'] = synthetic_targets
-    
     X = df.drop(columns=['synthetic_target'])
     y = df['synthetic_target']
 
-    # Determine whether this is a pre-trained custom model or a built-in that needs fitting
-    is_pretrained = getattr(model, '_is_pretrained', False)
+    # Guard: need at least 2 classes to train/evaluate
+    if y.nunique() < 2:
+        return {
+            "years_simulated": years,
+            "metrics": {
+                "demographic_parity_difference": 0.0,
+                "demographic_parity_ratio": 1.0,
+                "approval_rate_overall": round(float(y.mean()), 4),
+                "accuracy": 1.0
+            },
+            "bias_flags": [{
+                "category": f"Demographic Disparity on {sensitive_feature}",
+                "severity": "Low",
+                "value": 1.0
+            }]
+        }
 
+    # ── 6. Fit or run pre-trained model ────────────────────────────────────
+    is_pretrained = getattr(model, '_is_pretrained', False)
     if is_pretrained:
-        # Pre-trained custom model: align features to what the model was trained on
         try:
             expected_features = model.feature_names_in_ if hasattr(model, 'feature_names_in_') else None
             if expected_features is not None:
-                # Keep only columns the model knows; fill missing ones with 0
-                missing = [c for c in expected_features if c not in X.columns]
-                for c in missing:
-                    X[c] = 0
-                extra = [c for c in X.columns if c not in expected_features]
-                X = X.drop(columns=extra, errors='ignore')
-                X = X[list(expected_features)]  # enforce column order
+                for c in expected_features:
+                    if c not in X.columns:
+                        X[c] = 0
+                X = X[[c for c in expected_features if c in X.columns]]
             predictions = model.predict(X)
             accuracy = float(model.score(X, y)) if hasattr(model, 'score') else 0.75
         except Exception as e:
@@ -211,28 +268,28 @@ def run_simulation(data: list, years: int, sensitive_feature: str, threshold_adj
     else:
         model.fit(X, y)
         predictions = model.predict(X)
-        accuracy = float(model.score(X, y)) if hasattr(model, 'score') else 0.75
-    
+        accuracy = float(model.score(X, y))
+
     try:
         dp_diff = demographic_parity_difference(y, predictions, sensitive_features=sensitive_vals)
         dp_ratio = demographic_parity_ratio(y, predictions, sensitive_features=sensitive_vals)
-    except:
+    except Exception:
         dp_diff = 0.0
         dp_ratio = 1.0
-    
+
     return {
         "years_simulated": years,
         "metrics": {
-            "demographic_parity_difference": round(dp_diff, 4),
-            "demographic_parity_ratio": round(dp_ratio, 4),
-            "approval_rate_overall": round(predictions.mean(), 4),
+            "demographic_parity_difference": round(float(dp_diff), 4),
+            "demographic_parity_ratio": round(float(dp_ratio), 4),
+            "approval_rate_overall": round(float(predictions.mean()), 4),
             "accuracy": round(accuracy, 4)
         },
         "bias_flags": [
             {
                 "category": f"Demographic Disparity on {sensitive_feature}",
                 "severity": "High" if dp_ratio < 0.8 else "Low",
-                "value": round(dp_ratio, 4)
+                "value": round(float(dp_ratio), 4)
             }
         ]
     }
@@ -415,9 +472,22 @@ def data_status():
             data = json.load(f)
         if not data:
             return {"has_data": False, "columns": [], "row_count": 0, "source": "none"}
+
         source = data[0].get("metadata", {}).get("source", "synthetic")
-        columns = list(data[0].get("traits", {}).keys())
-        return {"has_data": True, "columns": columns, "row_count": len(data), "source": source}
+        raw_traits = data[0].get("traits", {})
+
+        # Only expose scalar-valued columns (skip nested dicts/lists)
+        columns = [
+            k for k, v in raw_traits.items()
+            if not isinstance(v, (dict, list))
+        ]
+
+        return {
+            "has_data": True,
+            "columns": columns,
+            "row_count": len(data),
+            "source": source
+        }
     except FileNotFoundError:
         return {"has_data": False, "columns": [], "row_count": 0, "source": "none"}
 
