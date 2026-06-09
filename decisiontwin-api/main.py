@@ -131,7 +131,12 @@ def get_model(model_type: str):
         if not os.path.exists(path):
             raise HTTPException(status_code=404, detail=f"Custom model '{filename}' not found.")
         try:
-            return joblib.load(path)
+            model = joblib.load(path)
+            # Mark as pre-trained so run_simulation skips re-fitting
+            model._is_pretrained = True
+            return model
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Failed to load custom model: {str(e)}")
     if model_type == "random_forest":
@@ -183,10 +188,30 @@ def run_simulation(data: list, years: int, sensitive_feature: str, threshold_adj
     
     X = df.drop(columns=['synthetic_target'])
     y = df['synthetic_target']
-    
-    clf = model
-    clf.fit(X, y)
-    predictions = clf.predict(X)
+
+    # Determine whether this is a pre-trained custom model or a built-in that needs fitting
+    is_pretrained = getattr(model, '_is_pretrained', False)
+
+    if is_pretrained:
+        # Pre-trained custom model: align features to what the model was trained on
+        try:
+            expected_features = model.feature_names_in_ if hasattr(model, 'feature_names_in_') else None
+            if expected_features is not None:
+                # Keep only columns the model knows; fill missing ones with 0
+                missing = [c for c in expected_features if c not in X.columns]
+                for c in missing:
+                    X[c] = 0
+                extra = [c for c in X.columns if c not in expected_features]
+                X = X.drop(columns=extra, errors='ignore')
+                X = X[list(expected_features)]  # enforce column order
+            predictions = model.predict(X)
+            accuracy = float(model.score(X, y)) if hasattr(model, 'score') else 0.75
+        except Exception as e:
+            raise HTTPException(status_code=422, detail=f"Custom model prediction failed: {str(e)}")
+    else:
+        model.fit(X, y)
+        predictions = model.predict(X)
+        accuracy = float(model.score(X, y)) if hasattr(model, 'score') else 0.75
     
     try:
         dp_diff = demographic_parity_difference(y, predictions, sensitive_features=sensitive_vals)
@@ -201,7 +226,7 @@ def run_simulation(data: list, years: int, sensitive_feature: str, threshold_adj
             "demographic_parity_difference": round(dp_diff, 4),
             "demographic_parity_ratio": round(dp_ratio, 4),
             "approval_rate_overall": round(predictions.mean(), 4),
-            "accuracy": round(clf.score(X, y), 4) if hasattr(clf, 'score') else 0.75
+            "accuracy": round(accuracy, 4)
         },
         "bias_flags": [
             {

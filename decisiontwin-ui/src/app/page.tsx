@@ -120,7 +120,9 @@ export default function Dashboard() {
     ? timeSeriesData[timeSeriesData.length - 1].disparityRatio > timeSeriesData[0].disparityRatio ? 'up' : 'down'
     : null;
 
-  const featureOptions = ['gender', 'race', 'age_group'];
+  const featureOptions = availableColumns.length > 0
+    ? availableColumns.filter(c => !['credit_score', 'score', 'income', 'salary', 'rating', 'grade', 'points'].includes(c.toLowerCase()))
+    : ['gender', 'race', 'age_group'];
 
   if (isCheckingStatus) {
     return (
@@ -159,9 +161,9 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="min-h-screen p-8 max-w-7xl mx-auto space-y-8">
+    <main className="min-h-screen p-4 sm:p-8 max-w-7xl mx-auto space-y-8">
 
-      <header className="flex justify-between items-end border-b border-zinc-800 pb-6">
+      <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 border-b border-zinc-800 pb-6">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">DecisionTwin</h1>
           <p className="text-zinc-400">Forensic AI Bias Simulation & Audit Platform</p>
@@ -184,8 +186,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-12 gap-8">
 
-        <div className="col-span-12 md:col-span-4 space-y-6">
-          <div className="glass-card p-6 flex flex-col space-y-6">
+        <div className="col-span-12 md:col-span-4 space-y-6">          <div className="glass-card p-6 flex flex-col space-y-6">
             <h2 className="text-xl font-semibold mb-2">Control Panel</h2>
 
             <div className="space-y-4">
@@ -256,7 +257,7 @@ export default function Dashboard() {
 
         <div className="col-span-12 md:col-span-8 flex flex-col space-y-6">
 
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div className="glass-card p-6">
               <h3 className="text-sm font-medium text-zinc-400">Systemic Disparate Impact</h3>
               <div className="mt-4 flex items-baseline gap-2">

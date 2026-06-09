@@ -50,6 +50,7 @@ export default function ModelCompare() {
   const [sensitiveFeature, setSensitiveFeature] = useState('gender');
   const [yearsToSimulate, setYearsToSimulate] = useState(5);
   const [results, setResults] = useState<ModelResult[]>([]);
+  const [modelErrors, setModelErrors] = useState<Record<string, string>>({});
   const [isSimulating, setIsSimulating] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [isDragging, setIsDragging] = useState(false);
@@ -125,6 +126,7 @@ export default function ModelCompare() {
     if (selectedIds.length === 0) return;
     setIsSimulating(true);
     setResults([]);
+    setModelErrors({});
     for (const id of selectedIds) {
       const entry = allModels.find(m => m.id === id);
       if (!entry) continue;
@@ -134,12 +136,18 @@ export default function ModelCompare() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ years_to_simulate: yearsToSimulate, sensitive_feature: sensitiveFeature, threshold_adjustment: 0, model_type: id }),
         });
-        if (!res.ok) continue;
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
+          setModelErrors(prev => ({ ...prev, [id]: errBody.detail ?? `HTTP ${res.status}` }));
+          continue;
+        }
         const data = await res.json();
         if (data?.metrics) {
           setResults(prev => [...prev, { id, name: entry.name, color: entry.color, metrics: data.metrics }]);
         }
-      } catch { /* skip failed model */ }
+      } catch (e) {
+        setModelErrors(prev => ({ ...prev, [id]: (e as Error).message }));
+      }
     }
     setIsSimulating(false);
   };
@@ -336,7 +344,7 @@ export default function ModelCompare() {
 
         {/* ── Results Area ── */}
         <div className="col-span-12 lg:col-span-8 space-y-6">
-          {results.length === 0 ? (
+          {results.length === 0 && Object.keys(modelErrors).length === 0 ? (
             <div className="glass-card p-12 flex flex-col items-center justify-center text-center">
               <Brain className="w-16 h-16 text-zinc-700 mb-4" />
               <h3 className="text-xl font-medium text-zinc-400 mb-2">No Results Yet</h3>
@@ -344,7 +352,28 @@ export default function ModelCompare() {
             </div>
           ) : (
             <>
+              {/* Model errors */}
+              {Object.entries(modelErrors).length > 0 && (
+                <div className="glass-card p-6 space-y-3">
+                  <h3 className="text-lg font-medium text-rose-400 flex items-center gap-2">
+                    <XCircle className="w-5 h-5" /> Model Errors
+                  </h3>
+                  {Object.entries(modelErrors).map(([id, msg]) => {
+                    const entry = allModels.find(m => m.id === id);
+                    return (
+                      <div key={id} className="flex items-start gap-3 p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg">
+                        <XCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <span className="text-rose-300 text-sm font-medium">{entry?.name ?? id}: </span>
+                          <span className="text-rose-400 text-sm">{msg}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               {/* Results Table */}
+              {results.length > 0 && (
               <div className="glass-card p-6">
                 <h3 className="text-lg font-medium mb-4">Comparison Results</h3>
                 <div className="overflow-x-auto">
@@ -400,8 +429,10 @@ export default function ModelCompare() {
                   </table>
                 </div>
               </div>
+              )}
 
               {/* Radar Chart */}
+              {results.length > 0 && (
               <div className="glass-card p-6">
                 <h3 className="text-lg font-medium mb-4">Performance Radar</h3>
                 <ResponsiveContainer width="100%" height={300}>
@@ -424,8 +455,10 @@ export default function ModelCompare() {
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
+              )}
 
               {/* Bar Chart */}
+              {results.length > 0 && (
               <div className="glass-card p-6">
                 <h3 className="text-lg font-medium mb-4">Metrics Comparison</h3>
                 <ResponsiveContainer width="100%" height={300}>
@@ -441,6 +474,7 @@ export default function ModelCompare() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+              )}
             </>
           )}
         </div>

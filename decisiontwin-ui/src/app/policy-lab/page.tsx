@@ -32,7 +32,6 @@ export default function PolicyLab() {
   const [tradeoffData, setTradeoffData] = useState<TradeoffPoint[]>([]);
   const [isRunningTradeoff, setIsRunningTradeoff] = useState(false);
 
-  // Check if real data is loaded (to gate the run button)
   const { data: dataStatus } = useQuery({
     queryKey: ['data-status'],
     queryFn: async () => {
@@ -42,6 +41,11 @@ export default function PolicyLab() {
   });
 
   const hasData = dataStatus?.has_data ?? false;
+  // Use columns from ingested data as feature options if available, otherwise fall back to defaults
+  const defaultFeatures = ['gender', 'race', 'age_group'];
+  const featureOptions = (dataStatus?.columns && dataStatus.columns.length > 0)
+    ? dataStatus.columns.filter(c => !['credit_score', 'score', 'income', 'salary', 'rating', 'grade', 'points'].includes(c.toLowerCase()))
+    : defaultFeatures;
 
   const runSimulation = useMutation({
     mutationFn: async ({ years, threshold }: { years: number; threshold: number }) => {
@@ -68,9 +72,10 @@ export default function PolicyLab() {
 
   const runLongitudinalSimulation = () => {
     setSimulationData([]);
-    for (let year = 1; year <= 10; year++) {
+    // Fire all 10 year simulations in parallel
+    Array.from({ length: 10 }, (_, i) => i + 1).forEach(year => {
       runSimulation.mutate({ years: year, threshold: baseThreshold });
-    }
+    });
   };
 
   // After all 10 years complete, save the year-10 result to Reports history
@@ -90,30 +95,33 @@ export default function PolicyLab() {
     }
   }, [simulationData]);
 
-  // Build trade-off chart by running simulations at 4 threshold offsets using real data
+  // Build trade-off chart by running simulations at 5 threshold offsets in parallel
   const runTradeoffAnalysis = async () => {
     if (!hasData) return;
     setIsRunningTradeoff(true);
     const offsets = [-30, -15, 0, 15, 30];
-    const results: TradeoffPoint[] = [];
-    for (const offset of offsets) {
-      try {
-        const res = await fetch(`${API_BASE_URL}/simulate-bias`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ years_to_simulate: 5, sensitive_feature: sensitiveFeature, threshold_adjustment: offset })
-        });
-        const data = await res.json();
+    try {
+      const responses = await Promise.all(
+        offsets.map(offset =>
+          fetch(`${API_BASE_URL}/simulate-bias`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ years_to_simulate: 5, sensitive_feature: sensitiveFeature, threshold_adjustment: offset })
+          }).then(r => r.json()).catch(() => null)
+        )
+      );
+      const results: TradeoffPoint[] = [];
+      responses.forEach((data, i) => {
         if (data?.metrics) {
           results.push({
-            offset,
+            offset: offsets[i],
             fairness: data.metrics.demographic_parity_ratio,
             approval: parseFloat((data.metrics.approval_rate_overall * 100).toFixed(2)),
           });
         }
-      } catch { /* skip failed offset */ }
-    }
-    setTradeoffData(results);
+      });
+      setTradeoffData(results);
+    } catch { /* ignore */ }
     setIsRunningTradeoff(false);
   };
 
@@ -204,9 +212,9 @@ export default function PolicyLab() {
                 onChange={(e) => { setSensitiveFeature(e.target.value); setSimulationData([]); }}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-zinc-300 focus:outline-none focus:border-blue-500"
               >
-                <option value="gender">Gender</option>
-                <option value="race">Race</option>
-                <option value="age_group">Age Group</option>
+                {featureOptions.map(f => (
+                  <option key={f} value={f}>{f}</option>
+                ))}
               </select>
             </div>
 
