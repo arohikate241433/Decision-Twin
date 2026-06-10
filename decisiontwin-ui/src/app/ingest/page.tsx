@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { API_BASE_URL } from '@/lib/api-config';
 import { Upload, FileSpreadsheet, FileJson, Database, CheckCircle2, AlertTriangle, X, File } from 'lucide-react';
@@ -25,6 +26,7 @@ interface IngestState {
 }
 
 export default function DataIngest() {
+  const router = useRouter();
   const [state, setState] = useState<IngestState>({
     file: null,
     fileType: 'csv',
@@ -142,7 +144,8 @@ export default function DataIngest() {
     },
     onSuccess: () => {
       setUploadStatus('success');
-      setUploadMessage('Data ingested successfully and saved to mock_personas.json');
+      setUploadMessage('Data ingested successfully! Redirecting to dashboard...');
+      setTimeout(() => router.push('/'), 1500);
     },
     onError: (error) => {
       setUploadStatus('error');
