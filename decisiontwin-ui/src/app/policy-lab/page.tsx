@@ -107,23 +107,23 @@ export default function PolicyLab() {
 
   return (
     <main className="min-h-screen p-8 max-w-7xl mx-auto space-y-8">
-      <header className="border-b border-zinc-800 pb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">Policy Lab</h1>
-        <p className="text-zinc-400">Test What-If policy scenarios and visualize trade-offs</p>
+      <header className="border-b border-slate-200 pb-6">
+        <h1 className="text-3xl font-bold text-slate-800 mb-2">Policy Lab</h1>
+        <p className="text-slate-500">Test What-If policy scenarios and visualize trade-offs</p>
       </header>
 
       <div className="grid grid-cols-12 gap-8">
         {/* Control Panel */}
         <div className="col-span-12 lg:col-span-4 space-y-6">
           <div className="glass-card p-6 space-y-6">
-            <h2 className="text-xl font-semibold">Simulation Controls</h2>
+            <h2 className="text-xl font-semibold text-slate-800">Simulation Controls</h2>
             
             <div className="space-y-4">
-              <label className="block text-sm font-medium text-zinc-400">Sensitive Feature</label>
+              <label className="block text-sm font-medium text-slate-500">Sensitive Feature</label>
               <select
                 value={sensitiveFeature}
                 onChange={(e) => setSensitiveFeature(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-zinc-300 focus:outline-none focus:border-blue-500"
+                className="w-full bg-[#F8FAFC] border border-slate-200 rounded-xl p-2 text-slate-700 focus:outline-none focus:border-orange-400"
               >
                 <option value="gender">Gender</option>
                 <option value="race">Race</option>
@@ -131,10 +131,10 @@ export default function PolicyLab() {
               </select>
             </div>
 
-            <div className="space-y-4 pt-4 border-t border-zinc-800">
-              <label className="block text-sm font-medium text-zinc-400 flex justify-between">
+            <div className="space-y-4 pt-4 border-t border-slate-100">
+              <label className="block text-sm font-medium text-slate-500 flex justify-between">
                 <span>Base Credit Threshold</span>
-                <span className="text-blue-500 font-mono">{baseThreshold}</span>
+                <span className="font-mono" style={{ color: '#1E3A8A' }}>{baseThreshold}</span>
               </label>
               <input
                 type="range"
@@ -142,15 +142,16 @@ export default function PolicyLab() {
                 max="750"
                 value={baseThreshold}
                 onChange={(e) => setBaseThreshold(parseInt(e.target.value))}
-                className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                style={{ accentColor: '#F97316' }}
               />
-              <p className="text-xs text-zinc-500">Adjust the base credit score threshold for approval.</p>
+              <p className="text-xs text-slate-500">Adjust the base credit score threshold for approval.</p>
             </div>
 
             <button
               onClick={runLongitudinalSimulation}
               disabled={runSimulation.isPending}
-              className="w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+              className="btn-primary w-full py-3 rounded-xl flex items-center justify-center gap-2 text-sm disabled:opacity-50"
             >
               {runSimulation.isPending ? (
                 <span className="animate-spin">⟳</span>
@@ -163,21 +164,21 @@ export default function PolicyLab() {
 
           {/* Policy Recommendations */}
           <div className="glass-card p-6 space-y-4">
-            <h2 className="text-xl font-semibold">Policy Recommendations</h2>
+            <h2 className="text-xl font-semibold text-slate-800">Policy Recommendations</h2>
             {recommendations.map((rec, i) => (
-              <div key={i} className="p-4 bg-zinc-900/50 rounded-lg border border-zinc-800">
+              <div key={i} className="p-4 bg-[#F8FAFC] rounded-lg border border-slate-100">
                 <div className="flex items-center gap-3 mb-2">
-                  <rec.icon className="w-5 h-5 text-amber-500" />
-                  <span className="font-medium text-white">{rec.title}</span>
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    rec.impact === 'Critical' ? 'bg-rose-500/20 text-rose-400' :
-                    rec.impact === 'High Impact' ? 'bg-blue-500/20 text-blue-400' :
-                    'bg-zinc-700 text-zinc-400'
+                  <rec.icon className="w-5 h-5 text-amber-600" />
+                  <span className="font-medium text-slate-800">{rec.title}</span>
+                  <span className={`text-xs px-2 py-1 rounded font-medium ${
+                    rec.impact === 'Critical' ? 'bg-rose-50 text-rose-700' :
+                    rec.impact === 'High Impact' ? 'bg-blue-50 text-blue-700' :
+                    'bg-slate-100 text-slate-600'
                   }`}>
                     {rec.impact}
                   </span>
                 </div>
-                <p className="text-sm text-zinc-400">{rec.description}</p>
+                <p className="text-sm text-slate-500">{rec.description}</p>
               </div>
             ))}
           </div>
@@ -187,24 +188,24 @@ export default function PolicyLab() {
         <div className="col-span-12 lg:col-span-8 space-y-6">
           {/* Longitudinal Chart */}
           <div className="glass-card p-6">
-            <h3 className="text-lg font-medium mb-4">Longitudinal Bias Drift (10 Years)</h3>
+            <h3 className="text-lg font-medium text-slate-800 mb-4">Longitudinal Bias Drift (10 Years)</h3>
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" />
-                  <XAxis dataKey="year" stroke="#71717a" />
-                  <YAxis stroke="#71717a" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                  <XAxis dataKey="year" stroke="#CBD5E1" tick={{ fill: '#94A3B8' }} />
+                  <YAxis stroke="#CBD5E1" tick={{ fill: '#94A3B8' }} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px' }}
-                    labelStyle={{ color: '#e4e4e7' }}
+                    contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '12px', boxShadow: '0 8px 30px rgba(0,0,0,0.08)' }}
+                    labelStyle={{ color: '#1E293B' }}
                   />
                   <Legend />
-                  <Line type="monotone" dataKey="disparityRatio" stroke="#ef4444" name="Disparity Ratio" strokeWidth={2} />
-                  <Line type="monotone" dataKey="approvalRate" stroke="#22c55e" name="Approval Rate %" strokeWidth={2} />
+                  <Line type="monotone" dataKey="disparityRatio" stroke="#EF4444" name="Disparity Ratio" strokeWidth={2} />
+                  <Line type="monotone" dataKey="approvalRate" stroke="#10B981" name="Approval Rate %" strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[300px] flex items-center justify-center text-zinc-500">
+              <div className="h-[300px] flex items-center justify-center text-slate-400">
                 Run simulation to see longitudinal drift
               </div>
             )}
@@ -212,32 +213,33 @@ export default function PolicyLab() {
 
           {/* Threshold Comparison */}
           <div className="glass-card p-6">
-            <h3 className="text-lg font-medium mb-4">Threshold Comparison Impact</h3>
+            <h3 className="text-lg font-medium text-slate-800 mb-4">Threshold Comparison Impact</h3>
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-2">Compare Threshold</label>
+                <label className="block text-sm font-medium text-slate-500 mb-2">Compare Threshold</label>
                 <input
                   type="range"
                   min="550"
                   max="750"
                   value={compareThreshold}
                   onChange={(e) => setCompareThreshold(parseInt(e.target.value))}
-                  className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                  style={{ accentColor: '#F97316' }}
                 />
-                <span className="text-amber-500 font-mono mt-2 block">{compareThreshold}</span>
+                <span className="font-mono mt-2 block" style={{ color: '#F97316' }}>{compareThreshold}</span>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-zinc-400">Base Threshold ({baseThreshold}):</span>
-                  <span className="text-blue-400 font-mono">{(baseThreshold - 650 + 0.75).toFixed(2)}</span>
+                  <span className="text-slate-500">Base Threshold ({baseThreshold}):</span>
+                  <span className="font-mono" style={{ color: '#1E3A8A' }}>{(baseThreshold - 650 + 0.75).toFixed(2)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-zinc-400">Compare Threshold ({compareThreshold}):</span>
-                  <span className="text-amber-400 font-mono">{(compareThreshold - 650 + 0.75).toFixed(2)}</span>
+                  <span className="text-slate-500">Compare Threshold ({compareThreshold}):</span>
+                  <span className="font-mono" style={{ color: '#F97316' }}>{(compareThreshold - 650 + 0.75).toFixed(2)}</span>
                 </div>
-                <div className="flex items-center justify-between pt-2 border-t border-zinc-800">
-                  <span className="text-zinc-300 font-medium">Impact:</span>
-                  <span className={`font-mono ${compareThreshold < baseThreshold ? 'text-emerald-500' : 'text-rose-500'}`}>
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  <span className="text-slate-700 font-medium">Impact:</span>
+                  <span className={`font-mono font-medium ${compareThreshold < baseThreshold ? 'text-emerald-600' : 'text-rose-600'}`}>
                     {compareThreshold < baseThreshold ? (
                       <><TrendingUp className="w-4 h-4 inline" /> +{(baseThreshold - compareThreshold) * 0.1}% approval</>
                     ) : (
@@ -251,7 +253,7 @@ export default function PolicyLab() {
 
           {/* Trade-off Matrix */}
           <div className="glass-card p-6">
-            <h3 className="text-lg font-medium mb-4">Fairness vs. Approval Trade-off</h3>
+            <h3 className="text-lg font-medium text-slate-800 mb-4">Fairness vs. Approval Trade-off</h3>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={[
                 { threshold: 600, fairness: 0.95, approval: 85 },
@@ -259,15 +261,16 @@ export default function PolicyLab() {
                 { threshold: 700, fairness: 0.70, approval: 60 },
                 { threshold: 750, fairness: 0.58, approval: 45 }
               ]}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" />
-                <XAxis dataKey="threshold" stroke="#71717a" label={{ value: 'Credit Threshold', position: 'insideBottom', fill: '#71717a' }} />
-                <YAxis stroke="#71717a" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                <XAxis dataKey="threshold" stroke="#CBD5E1" tick={{ fill: '#94A3B8' }} label={{ value: 'Credit Threshold', position: 'insideBottom', fill: '#94A3B8' }} />
+                <YAxis stroke="#CBD5E1" tick={{ fill: '#94A3B8' }} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px' }}
+                  contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '12px', boxShadow: '0 8px 30px rgba(0,0,0,0.08)' }}
+                  labelStyle={{ color: '#1E293B' }}
                 />
                 <Legend />
-                <Bar dataKey="fairness" name="Fairness (Ratio)" fill="#22c55e" />
-                <Bar dataKey="approval" name="Approval Rate %" fill="#3b82f6" />
+                <Bar dataKey="fairness" name="Fairness (Ratio)" fill="#10B981" />
+                <Bar dataKey="approval" name="Approval Rate %" fill="#1E3A8A" />
               </BarChart>
             </ResponsiveContainer>
           </div>

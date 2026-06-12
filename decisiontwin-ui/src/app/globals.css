@@ -1,45 +1,179 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
+
 @theme {
-  --color-zinc-950: #09090b;
-  --color-zinc-900: #18181b;
-  --color-zinc-800: #27272a;
-  
-  --color-blue-500: #3b82f6;
-  --color-blue-600: #2563eb;
-  
+  /* Light Fintech Palette */
+  --color-slate-50:  #F8FAFC;
+  --color-slate-100: #F1F5F9;
+  --color-slate-200: #E2E8F0;
+  --color-slate-300: #CBD5E1;
+  --color-slate-400: #94A3B8;
+  --color-slate-500: #64748B;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1E293B;
+  --color-slate-900: #0F172A;
+
+  /* Accent: Vibrant Coral/Orange */
+  --color-orange-400: #FB923C;
+  --color-orange-500: #F97316;
+  --color-orange-600: #EA580C;
+
+  /* Secondary Accent: Deep Navy Blue */
+  --color-blue-900: #1E3A8A;
+  --color-blue-800: #1E40AF;
+  --color-blue-700: #1D4ED8;
+  --color-blue-100: #DBEAFE;
+  --color-blue-50:  #EFF6FF;
+
+  /* Semantic */
   --color-emerald-500: #10b981;
-  --color-amber-500: #f59e0b;
-  --color-rose-600: #e11d48;
+  --color-amber-500:   #f59e0b;
+  --color-rose-500:    #f43f5e;
+  --color-purple-500:  #a855f7;
 }
 
-/* Base styles for the dark mode forensic aesthetic */
+/* ─── Base ────────────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 body {
-  background-color: var(--color-zinc-950);
-  color: #e4e4e7;
+  background-color: #F5F7FA;
+  color: #1E293B;
+  min-height: 100vh;
 }
 
-/* Glassmorphism utility for cards */
+/* ─── Light Card (replaces glass-card) ───────────────────────────────────── */
+.light-card {
+  background-color: #ffffff;
+  border-radius: 1.25rem;           /* rounded-2xl equivalent */
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: none;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.light-card:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+/* Keep glass-card as alias so other pages don't break immediately */
 .glass-card {
-  background-color: rgba(24, 24, 27, 0.8);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(39, 39, 42, 0.5);
-  border-radius: 0.75rem;
-  transition: all 0.2s ease-in-out;
+  background-color: #ffffff;
+  border-radius: 1.25rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: none;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .glass-card:hover {
-  border-color: rgba(59, 130, 246, 0.3);
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.05);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-/* Pulse animation for the timeline */
-@keyframes timelinePulse {
-  0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); }
-  70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+/* ─── Orange Gradient Utility ─────────────────────────────────────────────── */
+.btn-primary {
+  background: linear-gradient(135deg, #FB923C 0%, #F97316 100%);
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ─── Sidebar Active Item Accent ──────────────────────────────────────────── */
+.nav-item-active {
+  border-left: 4px solid #F97316;
+  background-color: #FFF7ED;
+  color: #1E293B;
+  font-weight: 700;
+  border-radius: 0 0.75rem 0.75rem 0;
+}
+
+.nav-item-inactive {
+  border-left: 4px solid transparent;
+  color: #94A3B8;
+  font-weight: 500;
+  border-radius: 0 0.75rem 0.75rem 0;
+}
+
+.nav-item-inactive:hover {
+  background-color: #F8FAFC;
+  color: #475569;
+  border-left-color: #E2E8F0;
+}
+
+/* ─── Animations ──────────────────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease both;
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.35s ease both;
+}
+
+@keyframes pulse-orange {
+  0%   { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
+  70%  { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
 }
 
 .thumb-pulse {
-  animation: timelinePulse 2s infinite;
+  animation: pulse-orange 2s infinite;
+}
+
+/* ─── Scrollbar (light-mode) ──────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* ─── Range input ─────────────────────────────────────────────────────────── */
+input[type="range"] {
+  accent-color: #F97316;
 }

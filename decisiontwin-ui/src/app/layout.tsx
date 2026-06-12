@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import Navigation from "@/components/Navigation";
-
-const inter = Inter({ subsets: ["latin"] });
+import AuthGuard from "@/components/AuthGuard";
 
 export const metadata: Metadata = {
   title: "DecisionTwin | AI Ethics Simulation",
@@ -17,11 +15,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} bg-zinc-950 text-zinc-50 min-h-screen antialiased`}>
+    <html lang="en">
+      <body className="bg-[#F5F7FA] text-slate-800 min-h-screen antialiased">
         <Providers>
-          <Navigation />
-          {children}
+          <AuthGuard>
+            {/* Sidebar + content shell */}
+            <div className="flex h-screen overflow-hidden">
+              <Navigation />
+              <main className="flex-1 overflow-y-auto">
+                {children}
+              </main>
+            </div>
+          </AuthGuard>
         </Providers>
       </body>
     </html>

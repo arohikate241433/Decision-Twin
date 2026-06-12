@@ -1,17 +1,22 @@
 import os
 import json
 import io
+import shutil
+import pandas as pd
+import numpy as np
 from fastapi import FastAPI, HTTPException, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import pandas as pd
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.preprocessing import LabelEncoder
-from fairlearn.metrics import demographic_parity_difference, demographic_parity_ratio
+from typing import List, Dict, Any, Optional
 
-app = FastAPI(title="DecisionTwin API", description="Provides simulation and AI endpoints for DecisionTwin.")
+from agents.persona_generator import PersonaGenerator
+from agents.simulation_critic import SimulationCritic
+from agents.compliance_auditor import ComplianceAuditor
+
+app = FastAPI(
+    title="DecisionTwin API", 
+    description="Multi-Agent AI Fairness, Simulation, and Governance Platform Backend"
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,308 +26,345 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-AI_ENABLED = os.environ.get("AI_ENABLED", "false").lower() == "true"
+# Active Session In-Memory Database
+SESSION = {
+    "df": None,
+    "model_path": None,
+    "domain": "lending",
+    "protected_attribute": "gender",
+    "target_outcome": "approved",
+    "simulation_results": None,
+    "hitl_overrides": {},  # {year: {row_index: decision}}
+    "years_simulated": 5
+}
 
-if AI_ENABLED:
-    try:
-        import vertexai
-        from vertexai.generative_models import GenerativeModel, GenerationConfig
-        PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT", "decisiontwin-hackathon")
-        LOCATION = "us-central1"
-        vertexai.init(project=PROJECT_ID, location=LOCATION)
-        gemini_pro = GenerativeModel("gemini-1.5-pro-preview-0409")
-    except Exception as e:
-        print(f"Vertex AI not initialized, falling back to mock data: {e}")
-        AI_ENABLED = False
+# Initialize Agents
+persona_gen = PersonaGenerator()
+sim_critic = SimulationCritic()
+compliance_aud = ComplianceAuditor()
+
+# Ensure temp directory for uploaded models
+TEMP_DIR = "temp_uploads"
+os.makedirs(TEMP_DIR, exist_ok=True)
+MOCK_DIR = "mock_data"
+os.makedirs(MOCK_DIR, exist_ok=True)
+
+# Generate mock datasets and models if they don't exist on startup
+try:
+    if not os.path.exists(os.path.join(MOCK_DIR, "lending_mock.csv")):
+        print("Mock data missing, generating Lending, Scholarship, and Hiring packs...")
+        import generate_mock_data
+        generate_mock_data.main()
+        print("Mock packs generated successfully.")
+except Exception as e:
+    print(f"Failed to pre-generate mock packs on startup: {e}")
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "message": "DecisionTwin API is running", "ai_enabled": AI_ENABLED}
+    return {
+        "status": "ok", 
+        "message": "DecisionTwin API is running",
+        "agents": {
+            "persona_generator": persona_gen.ai_enabled,
+            "simulation_critic": sim_critic.vertex_initialized or os.environ.get("OLLAMA_URL") is not None,
+            "compliance_auditor": compliance_aud.ai_enabled
+        }
+    }
+
+@app.get("/session")
+def get_session():
+    """Returns the current session state metadata"""
+    return {
+        "has_data": SESSION["df"] is not None,
+        "model_path": SESSION["model_path"],
+        "domain": SESSION["domain"],
+        "protected_attribute": SESSION["protected_attribute"],
+        "target_outcome": SESSION["target_outcome"],
+        "years_simulated": SESSION["years_simulated"],
+        "row_count": len(SESSION["df"]) if SESSION["df"] is not None else 0,
+        "columns": list(SESSION["df"].columns) if SESSION["df"] is not None else []
+    }
+
+@app.post("/upload-data")
+async def upload_data(
+    file: Optional[UploadFile] = File(None),
+    model_file: Optional[UploadFile] = File(None),
+    domain: str = Form("lending"),
+    protected_attribute: str = Form("gender"),
+    target_outcome: str = Form("approved"),
+    use_mock: bool = Form(False)
+):
+    """
+    Ingests CSV dataset and custom .pkl / .onnx models.
+    Supports using pre-trained mock datasets and models if use_mock is true.
+    """
+    try:
+        SESSION["domain"] = domain
+        SESSION["protected_attribute"] = protected_attribute
+        SESSION["target_outcome"] = target_outcome
+        SESSION["hitl_overrides"] = {} # Clear overrides on new upload
+        SESSION["simulation_results"] = None
+        
+        # 1. Handle Mock Data fallback or request
+        if use_mock or file is None:
+            mock_csv_path = os.path.join(MOCK_DIR, f"{domain}_mock.csv")
+            mock_model_path = os.path.join(MOCK_DIR, f"{domain}_model.pkl")
+            
+            if not os.path.exists(mock_csv_path) or not os.path.exists(mock_model_path):
+                # Fallback to create them dynamically if they don't exist yet
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Mock data for domain '{domain}' not found. Please run the mock data generator first."
+                )
+            
+            SESSION["df"] = pd.read_csv(mock_csv_path)
+            SESSION["model_path"] = mock_model_path
+            return {
+                "status": "success",
+                "message": f"Successfully loaded pre-trained mock pack for '{domain}'",
+                "columns": list(SESSION["df"].columns),
+                "row_count": len(SESSION["df"])
+            }
+
+        # 2. Handle Custom CSV File Upload
+        content = await file.read()
+        df = pd.read_csv(io.StringIO(content.decode('utf-8')))
+        SESSION["df"] = df
+
+        # 3. Handle Custom Model File Upload
+        if model_file is not None:
+            filename = model_file.filename
+            file_extension = os.path.splitext(filename)[1].lower()
+            if file_extension not in ['.pkl', '.onnx']:
+                raise HTTPException(
+                    status_code=400, 
+                    detail="Model must be in .pkl (joblib/pickle) or .onnx format"
+                )
+                
+            dest_path = os.path.join(TEMP_DIR, filename)
+            with open(dest_path, "wb") as buffer:
+                shutil.copyfileobj(model_file.file, buffer)
+            SESSION["model_path"] = dest_path
+        else:
+            # Fallback to domain-specific mock model
+            mock_model_path = os.path.join(MOCK_DIR, f"{domain}_model.pkl")
+            if os.path.exists(mock_model_path):
+                SESSION["model_path"] = mock_model_path
+            else:
+                SESSION["model_path"] = None
+
+        return {
+            "status": "success",
+            "message": f"Successfully uploaded custom dataset with {len(df)} records.",
+            "columns": list(df.columns),
+            "row_count": len(df),
+            "custom_model_uploaded": model_file is not None
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 class SyntheticDataRequest(BaseModel):
     persona_count: int = 100
-    characteristics: list[str] = ["age_group", "gender", "race", "income", "credit_score", "location"]
+    characteristics: List[str] = []
 
 @app.post("/generate-synthetic-data")
 def generate_synthetic_data(request: SyntheticDataRequest):
-    if not AI_ENABLED:
-        with open("mock_personas.json", "w") as f:
-            mock_data = [
-                {
-                    "persona_id": f"p_{i}", 
-                    "traits": {
-                        "age_group": "18-24" if i % 3 == 0 else "25-40" if i % 3 == 1 else "41-60", 
-                        "gender": "Male" if i % 2 == 0 else "Female",
-                        "race": "GroupA" if i % 3 == 0 else "GroupB" if i % 3 == 1 else "GroupC",
-                        "credit_score": 580 + (i % 150), 
-                        "income": 35000 + (i * 120),
-                        "location": "Urban" if i % 2 == 0 else "Suburban"
-                    }, 
-                    "metadata": {"gemini_seed_id": "mock"}
-                } 
-                for i in range(request.persona_count)
-            ]
-            json.dump(mock_data, f)
-        return {"status": "success", "source": "mock", "data": mock_data}
-
-    prompt = f"""
-    You are an expert synthetic data generator for an AI ethical auditing platform called DecisionTwin.
-    Generate a highly realistic, statistically diverse dataset of {request.persona_count} individuals.
-    
-    Include the following characteristics: {', '.join(request.characteristics)}.
-    Ensure representation across intersections (e.g., race, gender, socio-economic status).
-    Provide subtle, realistic correlations between features (e.g., location correlating with income).
-
-    Format the output strictly as a JSON array where each object contains a 'persona_id' and 'traits' dictionary.
     """
-    
-    try:
-        response = gemini_pro.generate_content(
-            prompt,
-            generation_config=GenerationConfig(
-                temperature=0.7,
-                response_mime_type="application/json"
-            )
-        )
-        
-        result_json = json.loads(response.text)
-        with open("mock_personas.json", "w") as f:
-            json.dump(result_json, f)
-            
-        return {"status": "success", "source": "gemini", "data": result_json[:5], "total": len(result_json)}
-        
-    except Exception as e:
-        print(f"Vertex AI not initialized, falling back to mock data: {e}")
-        with open("mock_personas.json", "w") as f:
-            mock_data = [
-                {
-                    "persona_id": f"p_{i}", 
-                    "traits": {
-                        "age_group": "18-24" if i % 3 == 0 else "25-40", 
-                        "gender": "Male" if i % 2 == 0 else "Female",
-                        "race": "GroupA" if i % 3 == 0 else "GroupB",
-                        "credit_score": 620 + (i % 100), 
-                        "income": 40000 + (i * 100),
-                        "location": "Urban" if i % 2 == 0 else "Suburban"
-                    }, 
-                    "metadata": {"gemini_seed_id": "mock_fallback"}
-                } 
-                for i in range(request.persona_count)
-            ]
-            json.dump(mock_data, f)
-        return {"status": "success", "source": "mock_fallback", "data": mock_data[:5], "total": len(mock_data)}
-
-
-class SimulationRequest(BaseModel):
-    years_to_simulate: int = 5
-    sensitive_feature: str = "gender"
-    threshold_adjustment: float = 0.0
-    model_type: str = "logistic"
-
-def get_model(model_type: str):
-    """Get ML model based on type"""
-    if model_type == "random_forest":
-        return RandomForestClassifier(n_estimators=50, max_depth=5, random_state=42)
-    elif model_type == "decision_tree":
-        return DecisionTreeClassifier(max_depth=5, random_state=42)
-    else:
-        return LogisticRegression(max_iter=1000)
-
-def run_simulation(data: list, years: int, sensitive_feature: str, threshold_adjustment: float, model):
-    """Run bias simulation with given parameters"""
-    df = pd.DataFrame([item["traits"] for item in data])
-    
-    if sensitive_feature not in df.columns:
-        raise HTTPException(status_code=400, detail=f"Sensitive feature '{sensitive_feature}' not found in dataset. Available: {list(df.columns)}")
-    
-    for col in df.columns:
-        if not pd.api.types.is_numeric_dtype(df[col]):
-            df[col] = pd.factorize(df[col])[0]
-    
-    sensitive_vals = df[sensitive_feature]
-    
-    drift_penalty_per_year = 4.0
-    synthetic_targets = []
-    
-    for i, row in df.iterrows():
-        base_score = float(row['credit_score'])
-        
-        if row[sensitive_feature] == 0:
-            year_penalty = years * drift_penalty_per_year
-        else:
-            year_penalty = 0
-            
-        approval_threshold = 650.0 - threshold_adjustment + year_penalty
-        
-        synthetic_targets.append(1 if base_score > approval_threshold else 0)
-        
-    df['synthetic_target'] = synthetic_targets
-    
-    X = df.drop(columns=['synthetic_target'])
-    y = df['synthetic_target']
-    
-    clf = model
-    clf.fit(X, y)
-    predictions = clf.predict(X)
-    
-    try:
-        dp_diff = demographic_parity_difference(y, predictions, sensitive_features=sensitive_vals)
-        dp_ratio = demographic_parity_ratio(y, predictions, sensitive_features=sensitive_vals)
-    except:
-        dp_diff = 0.0
-        dp_ratio = 1.0
-    
-    return {
-        "years_simulated": years,
-        "metrics": {
-            "demographic_parity_difference": round(dp_diff, 4),
-            "demographic_parity_ratio": round(dp_ratio, 4),
-            "approval_rate_overall": round(predictions.mean(), 4),
-            "accuracy": round(clf.score(X, y), 4) if hasattr(clf, 'score') else 0.75
-        },
-        "bias_flags": [
-            {
-                "category": f"Demographic Disparity on {sensitive_feature}",
-                "severity": "High" if dp_ratio < 0.8 else "Low",
-                "value": round(dp_ratio, 4)
-            }
-        ]
-    }
-
-@app.post("/simulate-bias")
-def simulate_bias(request: SimulationRequest):
-    try:
-        with open("mock_personas.json", "r") as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        raise HTTPException(status_code=400, detail="Generate synthetic data first.")
-
-    model = get_model(request.model_type)
-    result = run_simulation(data, request.years_to_simulate, request.sensitive_feature, request.threshold_adjustment, model)
-    
-    return {
-        "status": "success",
-        "model_type": request.model_type,
-        **result
-    }
-
-@app.post("/simulate-all-models")
-def simulate_all_models(request: SimulationRequest):
-    """Run simulation across all available models for comparison"""
-    try:
-        with open("mock_personas.json", "r") as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        raise HTTPException(status_code=400, detail="Generate synthetic data first.")
-
-    models = {
-        "logistic": LogisticRegression(max_iter=1000),
-        "random_forest": RandomForestClassifier(n_estimators=50, max_depth=5, random_state=42),
-        "decision_tree": DecisionTreeClassifier(max_depth=5, random_state=42)
-    }
-    
-    results = {}
-    for model_name, model in models.items():
-        results[model_name] = run_simulation(
-            data, 
-            request.years_to_simulate, 
-            request.sensitive_feature, 
-            request.threshold_adjustment, 
-            model
-        )
-    
-    return {"status": "success", "results": results}
-
-
-class ReportRequest(BaseModel):
-    demographic_parity_ratio: float
-    demographic_parity_difference: float
-    sensitive_feature: str
-    years_simulated: int
-
-@app.post("/generate-report")
-def generate_report(request: ReportRequest):
-    if not AI_ENABLED:
-        return {
-            "status": "success", 
-            "report": f"Mock AI Review [{request.years_simulated} Years]: The demographic parity ratio of {request.demographic_parity_ratio:.4f} indicates {'systematic disparity requiring immediate policy intervention.' if request.demographic_parity_ratio < 0.8 else 'acceptable bias levels within regulatory thresholds.'} The disparity difference of {request.demographic_parity_difference:.4f} suggests moderate systemic impact on {request.sensitive_feature} demographics. Recommend continuous monitoring and threshold adjustment to maintain compliance."
-        }
-        
-    prompt = f"""
-    Act as an AI Ethics consultant. Given these statistical biases from a {request.years_simulated}-year simulation:
-    - Sensitive Feature: {request.sensitive_feature}
-    - Demographic Parity Ratio (80% rule): {request.demographic_parity_ratio}
-    - Demographic Parity Difference: {request.demographic_parity_difference}
-    
-    Write a concise 1-paragraph summary explaining the business impact and systemic risk to non-technical executives. 
-    Be direct, professional, and forensic.
+    Generates standalone synthetic personas based on the active dataset schema.
     """
-    
+    if SESSION["df"] is None:
+        raise HTTPException(status_code=400, detail="No dataset uploaded in active session.")
     try:
-        response = gemini_pro.generate_content(
-            prompt,
-            generation_config=GenerationConfig(temperature=0.4)
+        personas = persona_gen.generate_personas(
+            SESSION["df"], 
+            SESSION["domain"], 
+            count=request.persona_count
         )
-        return {"status": "success", "report": response.text.strip()}
+        return {"status": "success", "data": personas}
     except Exception as e:
-        print(f"Vertex AI report error: {e}. Falling back to mock report.")
-        return {
-            "status": "success", 
-            "report": f"Mock AI Review [{request.years_simulated} Years]: Systemic divergence detected. The demographic parity ratio of {request.demographic_parity_ratio} indicates algorithmic polarization. A policy threshold review is strongly recommended to neutralize compounding disparities on {request.sensitive_feature}."
-        }
+        raise HTTPException(status_code=500, detail=f"Persona generation failed: {str(e)}")
 
-
-@app.post("/ingest-data")
-async def ingest_data(
-    file: UploadFile = File(...),
-    fileType: str = Form(...),
-    schema: str = Form(...)
+@app.post("/run-simulation")
+def run_simulation(
+    years: int = 5,
+    generate_personas: bool = False,
+    adversarial_count: int = 15
 ):
-    """Ingest CSV, JSON, or Parquet data for bias simulation"""
-    content = await file.read()
-    
+    """
+    Executes the multi-agent longitudinal simulation.
+    If generate_personas is True, Agent 1 (Gemini) generates synthetic adversarial personas
+    which are appended to the dataset before Agent 2 runs the longitudinal simulation.
+    """
+    if SESSION["df"] is None:
+        raise HTTPException(status_code=400, detail="No dataset uploaded in active session.")
+    if SESSION["model_path"] is None:
+        raise HTTPException(status_code=400, detail="No prediction model loaded. Upload a model or select a domain pack.")
+
     try:
-        if fileType == "csv":
-            df = pd.read_csv(io.StringIO(content.decode('utf-8')))
-        elif fileType == "json":
-            data = json.loads(content.decode('utf-8'))
-            df = pd.DataFrame(data)
-        elif fileType == "parquet":
-            df = pd.read_parquet(io.BytesIO(content))
-        else:
-            raise HTTPException(status_code=400, detail=f"Unsupported file type: {fileType}")
+        SESSION["years_simulated"] = years
+        df_to_simulate = SESSION["df"].copy()
         
-        personas = []
-        for i, row in df.iterrows():
-            persona = {
-                "persona_id": f"ingested_{i}",
-                "traits": row.to_dict(),
-                "metadata": {"source": file.filename, "file_type": fileType}
-            }
-            personas.append(persona)
+        # Agent 1: Generate adversarial edge-case personas and append
+        adversarial_personas = []
+        if generate_personas:
+            try:
+                raw_personas = persona_gen.generate_personas(
+                    SESSION["df"], 
+                    SESSION["domain"], 
+                    count=adversarial_count
+                )
+                
+                # Convert list of persona objects into a clean pandas DataFrame
+                new_records = []
+                for p in raw_personas:
+                    traits = p.get("traits", {})
+                    # Add missing columns with default/NaN if needed
+                    for col in df_to_simulate.columns:
+                        if col not in traits and col != SESSION["target_outcome"]:
+                            traits[col] = None
+                    new_records.append(traits)
+                
+                df_personas = pd.DataFrame(new_records)
+                # Concatenate with active dataset
+                df_to_simulate = pd.concat([df_to_simulate, df_personas], ignore_index=True)
+                df_to_simulate = df_to_simulate.ffill().bfill()  # Handle NaNs from formatting mismatches
+                
+                # Track generated personas for visual logging
+                adversarial_personas = raw_personas
+            except Exception as e:
+                print(f"Agent 1 persona generation failed: {e}")
         
-        with open("mock_personas.json", "w") as f:
-            json.dump(personas, f)
+        # Agent 2: Run longitudinal simulation
+        results = sim_critic.simulate_longitudinal_loop(
+            initial_df=df_to_simulate,
+            model_path=SESSION["model_path"],
+            protected_attribute=SESSION["protected_attribute"],
+            target_outcome=SESSION["target_outcome"],
+            domain=SESSION["domain"],
+            years=years,
+            hitl_overrides=SESSION["hitl_overrides"]
+        )
+        
+        SESSION["simulation_results"] = results
         
         return {
             "status": "success",
-            "message": f"Successfully ingested {len(personas)} records",
-            "columns": list(df.columns),
-            "row_count": len(df)
+            "years_simulated": years,
+            "adversarial_personas_count": len(adversarial_personas),
+            "adversarial_personas": adversarial_personas,
+            "gemma_critique": results["gemma_critique"],
+            "yearly_results": [
+                {
+                    "year": r["year"],
+                    "metrics": r["metrics"],
+                    "average_target_rate": r["average_target_rate"],
+                    "borderline_cases": r["borderline_cases"],
+                    "data_snapshot": r.get("data_snapshot", []),
+                    "decisions": r.get("decisions", [])
+                }
+                for r in results["yearly_results"]
+            ]
         }
-        
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to ingest data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Simulation failed: {str(e)}")
 
+class OverrideRequest(BaseModel):
+    year: int
+    row_index: int
+    new_decision: int  # 0 or 1
+
+@app.post("/override-decision")
+def override_decision(request: OverrideRequest):
+    """
+    Applies a human-in-the-loop override for a borderline case at a specific year.
+    Updates the session override list and recalculates the simulation.
+    """
+    if SESSION["df"] is None:
+        raise HTTPException(status_code=400, detail="No dataset uploaded in active session.")
+    
+    # Store override
+    year = request.year
+    if year not in SESSION["hitl_overrides"]:
+        SESSION["hitl_overrides"][year] = {}
+        
+    SESSION["hitl_overrides"][year][request.row_index] = request.new_decision
+    
+    # Re-run simulation dynamically using the overrides
+    try:
+        results = sim_critic.simulate_longitudinal_loop(
+            initial_df=SESSION["df"],
+            model_path=SESSION["model_path"],
+            protected_attribute=SESSION["protected_attribute"],
+            target_outcome=SESSION["target_outcome"],
+            domain=SESSION["domain"],
+            years=SESSION["years_simulated"],
+            hitl_overrides=SESSION["hitl_overrides"]
+        )
+        SESSION["simulation_results"] = results
+        
+        return {
+            "status": "success",
+            "message": f"Successfully applied override at Year {year}, Index {request.row_index}.",
+            "yearly_results": [
+                {
+                    "year": r["year"],
+                    "metrics": r["metrics"],
+                    "average_target_rate": r["average_target_rate"],
+                    "borderline_cases": r["borderline_cases"]
+                }
+                for r in results["yearly_results"]
+            ],
+            "gemma_critique": results["gemma_critique"]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Recalculation failed: {str(e)}")
+
+@app.post("/generate-report")
+def generate_report():
+    """
+    Agent 3: Compliance Auditor.
+    Translates simulation statistics and critiques into a compliance audit report.
+    """
+    if SESSION["simulation_results"] is None:
+        raise HTTPException(status_code=400, detail="No simulation results found. Run a simulation first.")
+        
+    try:
+        report_text = compliance_aud.generate_audit_report(
+            simulation_results=SESSION["simulation_results"],
+            domain=SESSION["domain"],
+            protected_attribute=SESSION["protected_attribute"]
+        )
+        return {
+            "status": "success",
+            "report": report_text
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate report: {str(e)}")
 
 @app.get("/historical-simulations")
 def get_historical_simulations():
-    """Get historical simulation records"""
+    """Returns pre-loaded comparisons for the UI."""
     return {
         "status": "success",
-        "simulations": []
+        "simulations": [
+            {
+                "id": "sim_lending_historical",
+                "domain": "Lending",
+                "protected_attribute": "gender",
+                "demographic_parity_ratio": 0.65,
+                "regulatory_risk": "High Risk",
+                "date": "2026-06-12"
+            },
+            {
+                "id": "sim_hiring_historical",
+                "domain": "Hiring",
+                "protected_attribute": "gender",
+                "demographic_parity_ratio": 0.82,
+                "regulatory_risk": "Low Risk",
+                "date": "2026-06-11"
+            }
+        ]
     }
-
 
 if __name__ == "__main__":
     import uvicorn

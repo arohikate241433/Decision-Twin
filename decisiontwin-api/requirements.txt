@@ -1,8 +1,13 @@
 fastapi
 uvicorn
 google-cloud-aiplatform
+google-generativeai
+requests
 pandas
 scikit-learn
 fairlearn
 pydantic
 python-multipart
+joblib
+onnxruntime
+numpy
