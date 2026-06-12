@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { API_BASE_URL } from '@/lib/api-config';
 import {
   Play, ShieldAlert, CheckCircle2, RefreshCw, TrendingUp, TrendingDown,
-  ArrowRight, ShieldCheck, DollarSign, Users, AlertCircle, FileText, Settings
+  ArrowRight, ShieldCheck, DollarSign, Users, AlertCircle, FileText, Settings, Upload
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -567,8 +568,8 @@ export default function Dashboard() {
                 <strong className="text-slate-700">Critique (Gemma 2 Simulation Critic):</strong>{' '}
                 {simulationResults?.gemma_critique || 'Critique unavailable.'}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* HITL Intervention Panel */}
           {simulationResults && activeYearResults && (

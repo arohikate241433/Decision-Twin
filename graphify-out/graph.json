@@ -38,7 +38,7 @@
       "source_file": "decisiontwin-api\\generate_mock_data.py",
       "source_location": "L1",
       "id": "decisiontwin_api_generate_mock_data_py",
-      "community": 5,
+      "community": 6,
       "norm_label": "generate_mock_data.py"
     },
     {
@@ -47,7 +47,7 @@
       "source_file": "decisiontwin-api\\generate_mock_data.py",
       "source_location": "L10",
       "id": "generate_mock_data_create_lending_data",
-      "community": 5,
+      "community": 6,
       "norm_label": "create_lending_data()"
     },
     {
@@ -56,7 +56,7 @@
       "source_file": "decisiontwin-api\\generate_mock_data.py",
       "source_location": "L43",
       "id": "generate_mock_data_create_scholarship_data",
-      "community": 5,
+      "community": 6,
       "norm_label": "create_scholarship_data()"
     },
     {
@@ -65,7 +65,7 @@
       "source_file": "decisiontwin-api\\generate_mock_data.py",
       "source_location": "L72",
       "id": "generate_mock_data_create_hiring_data",
-      "community": 5,
+      "community": 6,
       "norm_label": "create_hiring_data()"
     },
     {
@@ -74,7 +74,7 @@
       "source_file": "decisiontwin-api\\generate_mock_data.py",
       "source_location": "L101",
       "id": "generate_mock_data_train_and_save_model",
-      "community": 5,
+      "community": 6,
       "norm_label": "train_and_save_model()"
     },
     {
@@ -83,7 +83,7 @@
       "source_file": "decisiontwin-api\\generate_mock_data.py",
       "source_location": "L121",
       "id": "generate_mock_data_main",
-      "community": 5,
+      "community": 6,
       "norm_label": "main()"
     },
     {
@@ -173,7 +173,7 @@
       "source_file": "decisiontwin-api\\main.py",
       "source_location": "L277",
       "id": "main_override_decision",
-      "community": 3,
+      "community": 2,
       "norm_label": "override_decision()"
     },
     {
@@ -235,7 +235,7 @@
       "file_type": "rationale",
       "source_file": "decisiontwin-api\\main.py",
       "source_location": "L278",
-      "community": 3,
+      "community": 2,
       "norm_label": "applies a human-in-the-loop override for a borderline case at a specific year.",
       "id": "main_rationale_278"
     },
@@ -263,7 +263,7 @@
       "source_file": "decisiontwin-api\\test_domain_agnostic.py",
       "source_location": "L1",
       "id": "decisiontwin_api_test_domain_agnostic_py",
-      "community": 4,
+      "community": 5,
       "norm_label": "test_domain_agnostic.py"
     },
     {
@@ -272,7 +272,7 @@
       "source_file": "decisiontwin-api\\test_domain_agnostic.py",
       "source_location": "L8",
       "id": "test_domain_agnostic_wait_for_server",
-      "community": 4,
+      "community": 5,
       "norm_label": "wait_for_server()"
     },
     {
@@ -281,7 +281,7 @@
       "source_file": "decisiontwin-api\\test_domain_agnostic.py",
       "source_location": "L23",
       "id": "test_domain_agnostic_test_1_cross_domain_ingestion",
-      "community": 4,
+      "community": 5,
       "norm_label": "test_1_cross_domain_ingestion()"
     },
     {
@@ -290,7 +290,7 @@
       "source_file": "decisiontwin-api\\test_domain_agnostic.py",
       "source_location": "L118",
       "id": "test_domain_agnostic_test_2_agent1_context_adaptation",
-      "community": 4,
+      "community": 5,
       "norm_label": "test_2_agent1_context_adaptation()"
     },
     {
@@ -299,7 +299,7 @@
       "source_file": "decisiontwin-api\\test_domain_agnostic.py",
       "source_location": "L186",
       "id": "test_domain_agnostic_test_3_agent2_dynamic_transition",
-      "community": 4,
+      "community": 5,
       "norm_label": "test_3_agent2_dynamic_transition()"
     },
     {
@@ -308,7 +308,7 @@
       "source_file": "decisiontwin-api\\test_domain_agnostic.py",
       "source_location": "L269",
       "id": "test_domain_agnostic_test_4_agent3_regulatory_shift",
-      "community": 4,
+      "community": 5,
       "norm_label": "test_4_agent3_regulatory_shift()"
     },
     {
@@ -316,7 +316,7 @@
       "file_type": "rationale",
       "source_file": "decisiontwin-api\\test_domain_agnostic.py",
       "source_location": "L9",
-      "community": 4,
+      "community": 5,
       "norm_label": "wait for the fastapi server to be reachable.",
       "id": "test_domain_agnostic_rationale_9"
     },
@@ -443,7 +443,7 @@
       "source_file": "decisiontwin-api\\agents\\simulation_critic.py",
       "source_location": "L1",
       "id": "decisiontwin_api_agents_simulation_critic_py",
-      "community": 3,
+      "community": 2,
       "norm_label": "simulation_critic.py"
     },
     {
@@ -452,7 +452,7 @@
       "source_file": "decisiontwin-api\\agents\\simulation_critic.py",
       "source_location": "L9",
       "id": "simulation_critic_simulationcritic",
-      "community": 3,
+      "community": 2,
       "norm_label": "simulationcritic"
     },
     {
@@ -461,7 +461,7 @@
       "source_file": "decisiontwin-api\\agents\\simulation_critic.py",
       "source_location": "L10",
       "id": "simulation_critic_simulationcritic_init",
-      "community": 3,
+      "community": 2,
       "norm_label": ".__init__()"
     },
     {
@@ -470,7 +470,7 @@
       "source_file": "decisiontwin-api\\agents\\simulation_critic.py",
       "source_location": "L30",
       "id": "simulation_critic_simulationcritic_query_gemma2",
-      "community": 3,
+      "community": 2,
       "norm_label": ".query_gemma2()"
     },
     {
@@ -479,7 +479,7 @@
       "source_file": "decisiontwin-api\\agents\\simulation_critic.py",
       "source_location": "L54",
       "id": "simulation_critic_simulationcritic_load_model",
-      "community": 3,
+      "community": 2,
       "norm_label": ".load_model()"
     },
     {
@@ -488,7 +488,7 @@
       "source_file": "decisiontwin-api\\agents\\simulation_critic.py",
       "source_location": "L68",
       "id": "simulation_critic_simulationcritic_predict",
-      "community": 3,
+      "community": 2,
       "norm_label": ".predict()"
     },
     {
@@ -497,7 +497,7 @@
       "source_file": "decisiontwin-api\\agents\\simulation_critic.py",
       "source_location": "L106",
       "id": "simulation_critic_simulationcritic_apply_state_transitions",
-      "community": 3,
+      "community": 2,
       "norm_label": ".apply_state_transitions()"
     },
     {
@@ -506,7 +506,7 @@
       "source_file": "decisiontwin-api\\agents\\simulation_critic.py",
       "source_location": "L148",
       "id": "simulation_critic_simulationcritic_calculate_fairness_metrics",
-      "community": 3,
+      "community": 2,
       "norm_label": ".calculate_fairness_metrics()"
     },
     {
@@ -515,7 +515,7 @@
       "source_file": "decisiontwin-api\\agents\\simulation_critic.py",
       "source_location": "L197",
       "id": "simulation_critic_simulationcritic_simulate_longitudinal_loop",
-      "community": 3,
+      "community": 2,
       "norm_label": ".simulate_longitudinal_loop()"
     },
     {
@@ -523,7 +523,7 @@
       "file_type": "rationale",
       "source_file": "decisiontwin-api\\agents\\simulation_critic.py",
       "source_location": "L31",
-      "community": 3,
+      "community": 2,
       "norm_label": "queries gemma 2 using vertex ai or ollama local api.",
       "id": "simulation_critic_rationale_31"
     },
@@ -532,7 +532,7 @@
       "file_type": "rationale",
       "source_file": "decisiontwin-api\\agents\\simulation_critic.py",
       "source_location": "L55",
-      "community": 3,
+      "community": 2,
       "norm_label": "loads a model (.pkl or .onnx).",
       "id": "simulation_critic_rationale_55"
     },
@@ -541,7 +541,7 @@
       "file_type": "rationale",
       "source_file": "decisiontwin-api\\agents\\simulation_critic.py",
       "source_location": "L69",
-      "community": 3,
+      "community": 2,
       "norm_label": "performs model inference, automatically handling pipeline, sklearn models, or on",
       "id": "simulation_critic_rationale_69"
     },
@@ -550,7 +550,7 @@
       "file_type": "rationale",
       "source_file": "decisiontwin-api\\agents\\simulation_critic.py",
       "source_location": "L107",
-      "community": 3,
+      "community": 2,
       "norm_label": "applies mathematical state transitions based on decisions:         - lending: ap",
       "id": "simulation_critic_rationale_107"
     },
@@ -559,7 +559,7 @@
       "file_type": "rationale",
       "source_file": "decisiontwin-api\\agents\\simulation_critic.py",
       "source_location": "L149",
-      "community": 3,
+      "community": 2,
       "norm_label": "calculates demographic parity ratio, difference, and disparate impact ratio.",
       "id": "simulation_critic_rationale_149"
     },
@@ -568,7 +568,7 @@
       "file_type": "rationale",
       "source_file": "decisiontwin-api\\agents\\simulation_critic.py",
       "source_location": "L207",
-      "community": 3,
+      "community": 2,
       "norm_label": "runs the multi-year longitudinal simulation.         applies decisions, hitl ove",
       "id": "simulation_critic_rationale_207"
     },
@@ -623,7 +623,7 @@
       "source_file": "decisiontwin-ui\\src\\app\\layout.tsx",
       "source_location": "L1",
       "id": "decisiontwin_ui_src_app_layout_tsx",
-      "community": 10,
+      "community": 13,
       "norm_label": "layout.tsx"
     },
     {
@@ -632,7 +632,7 @@
       "source_file": "decisiontwin-ui\\src\\app\\layout.tsx",
       "source_location": "L12",
       "id": "layout_rootlayout",
-      "community": 10,
+      "community": 13,
       "norm_label": "rootlayout()"
     },
     {
@@ -641,17 +641,8 @@
       "source_file": "decisiontwin-ui\\src\\app\\page.tsx",
       "source_location": "L1",
       "id": "decisiontwin_ui_src_app_page_tsx",
-      "community": 11,
+      "community": 22,
       "norm_label": "page.tsx"
-    },
-    {
-      "label": "LightTooltip()",
-      "file_type": "code",
-      "source_file": "decisiontwin-ui\\src\\app\\page.tsx",
-      "source_location": "L56",
-      "id": "page_lighttooltip",
-      "community": 11,
-      "norm_label": "lighttooltip()"
     },
     {
       "label": "page.tsx",
@@ -659,26 +650,26 @@
       "source_file": "decisiontwin-ui\\src\\app\\compare\\page.tsx",
       "source_location": "L1",
       "id": "decisiontwin_ui_src_app_compare_page_tsx",
-      "community": 8,
+      "community": 10,
       "norm_label": "page.tsx"
     },
     {
       "label": "runComparison()",
       "file_type": "code",
       "source_file": "decisiontwin-ui\\src\\app\\compare\\page.tsx",
-      "source_location": "L72",
+      "source_location": "L117",
       "id": "page_runcomparison",
-      "community": 8,
+      "community": 10,
       "norm_label": "runcomparison()"
     },
     {
-      "label": "toggleModel()",
+      "label": "toggle()",
       "file_type": "code",
       "source_file": "decisiontwin-ui\\src\\app\\compare\\page.tsx",
-      "source_location": "L99",
-      "id": "page_togglemodel",
-      "community": 8,
-      "norm_label": "togglemodel()"
+      "source_location": "L147",
+      "id": "page_toggle",
+      "community": 10,
+      "norm_label": "toggle()"
     },
     {
       "label": "page.tsx",
@@ -686,7 +677,7 @@
       "source_file": "decisiontwin-ui\\src\\app\\ingest\\page.tsx",
       "source_location": "L1",
       "id": "decisiontwin_ui_src_app_ingest_page_tsx",
-      "community": 9,
+      "community": 11,
       "norm_label": "page.tsx"
     },
     {
@@ -695,7 +686,7 @@
       "source_file": "decisiontwin-ui\\src\\app\\ingest\\page.tsx",
       "source_location": "L50",
       "id": "page_handlecsvfile",
-      "community": 9,
+      "community": 11,
       "norm_label": "handlecsvfile()"
     },
     {
@@ -704,7 +695,7 @@
       "source_file": "decisiontwin-ui\\src\\app\\ingest\\page.tsx",
       "source_location": "L75",
       "id": "page_handlemodelfile",
-      "community": 9,
+      "community": 11,
       "norm_label": "handlemodelfile()"
     },
     {
@@ -713,7 +704,7 @@
       "source_file": "decisiontwin-ui\\src\\app\\login\\page.tsx",
       "source_location": "L1",
       "id": "decisiontwin_ui_src_app_login_page_tsx",
-      "community": 12,
+      "community": 14,
       "norm_label": "page.tsx"
     },
     {
@@ -722,7 +713,7 @@
       "source_file": "decisiontwin-ui\\src\\app\\login\\page.tsx",
       "source_location": "L18",
       "id": "page_handlesubmit",
-      "community": 12,
+      "community": 14,
       "norm_label": "handlesubmit()"
     },
     {
@@ -731,7 +722,7 @@
       "source_file": "decisiontwin-ui\\src\\app\\personas\\page.tsx",
       "source_location": "L1",
       "id": "decisiontwin_ui_src_app_personas_page_tsx",
-      "community": 22,
+      "community": 23,
       "norm_label": "page.tsx"
     },
     {
@@ -740,17 +731,26 @@
       "source_file": "decisiontwin-ui\\src\\app\\policy-lab\\page.tsx",
       "source_location": "L1",
       "id": "decisiontwin_ui_src_app_policy_lab_page_tsx",
-      "community": 13,
+      "community": 12,
       "norm_label": "page.tsx"
     },
     {
       "label": "runLongitudinalSimulation()",
       "file_type": "code",
       "source_file": "decisiontwin-ui\\src\\app\\policy-lab\\page.tsx",
-      "source_location": "L72",
+      "source_location": "L78",
       "id": "page_runlongitudinalsimulation",
-      "community": 13,
+      "community": 12,
       "norm_label": "runlongitudinalsimulation()"
+    },
+    {
+      "label": "runTradeoffAnalysis()",
+      "file_type": "code",
+      "source_file": "decisiontwin-ui\\src\\app\\policy-lab\\page.tsx",
+      "source_location": "L142",
+      "id": "page_runtradeoffanalysis",
+      "community": 12,
+      "norm_label": "runtradeoffanalysis()"
     },
     {
       "label": "page.tsx",
@@ -758,44 +758,35 @@
       "source_file": "decisiontwin-ui\\src\\app\\reports\\page.tsx",
       "source_location": "L1",
       "id": "decisiontwin_ui_src_app_reports_page_tsx",
-      "community": 7,
+      "community": 8,
       "norm_label": "page.tsx"
-    },
-    {
-      "label": "exportToCSV()",
-      "file_type": "code",
-      "source_file": "decisiontwin-ui\\src\\app\\reports\\page.tsx",
-      "source_location": "L123",
-      "id": "page_exporttocsv",
-      "community": 7,
-      "norm_label": "exporttocsv()"
-    },
-    {
-      "label": "generatePDFReport()",
-      "file_type": "code",
-      "source_file": "decisiontwin-ui\\src\\app\\reports\\page.tsx",
-      "source_location": "L144",
-      "id": "page_generatepdfreport",
-      "community": 7,
-      "norm_label": "generatepdfreport()"
     },
     {
       "label": "formatDate()",
       "file_type": "code",
       "source_file": "decisiontwin-ui\\src\\app\\reports\\page.tsx",
-      "source_location": "L185",
+      "source_location": "L13",
       "id": "page_formatdate",
-      "community": 7,
+      "community": 8,
       "norm_label": "formatdate()"
     },
     {
-      "label": "calculateTrend()",
+      "label": "exportToCSV()",
       "file_type": "code",
       "source_file": "decisiontwin-ui\\src\\app\\reports\\page.tsx",
-      "source_location": "L195",
-      "id": "page_calculatetrend",
-      "community": 7,
-      "norm_label": "calculatetrend()"
+      "source_location": "L18",
+      "id": "page_exporttocsv",
+      "community": 8,
+      "norm_label": "exporttocsv()"
+    },
+    {
+      "label": "exportSingleReport()",
+      "file_type": "code",
+      "source_file": "decisiontwin-ui\\src\\app\\reports\\page.tsx",
+      "source_location": "L33",
+      "id": "page_exportsinglereport",
+      "community": 8,
+      "norm_label": "exportsinglereport()"
     },
     {
       "label": "AuthGuard.tsx",
@@ -803,7 +794,7 @@
       "source_file": "decisiontwin-ui\\src\\components\\AuthGuard.tsx",
       "source_location": "L1",
       "id": "decisiontwin_ui_src_components_authguard_tsx",
-      "community": 14,
+      "community": 15,
       "norm_label": "authguard.tsx"
     },
     {
@@ -812,7 +803,7 @@
       "source_file": "decisiontwin-ui\\src\\components\\AuthGuard.tsx",
       "source_location": "L7",
       "id": "authguard_authguard",
-      "community": 14,
+      "community": 15,
       "norm_label": "authguard()"
     },
     {
@@ -821,7 +812,7 @@
       "source_file": "decisiontwin-ui\\src\\components\\Navigation.tsx",
       "source_location": "L1",
       "id": "decisiontwin_ui_src_components_navigation_tsx",
-      "community": 15,
+      "community": 16,
       "norm_label": "navigation.tsx"
     },
     {
@@ -830,7 +821,7 @@
       "source_file": "decisiontwin-ui\\src\\components\\Navigation.tsx",
       "source_location": "L28",
       "id": "navigation_handlelogout",
-      "community": 15,
+      "community": 16,
       "norm_label": "handlelogout()"
     },
     {
@@ -839,16 +830,34 @@
       "source_file": "decisiontwin-ui\\src\\components\\Providers.tsx",
       "source_location": "L1",
       "id": "decisiontwin_ui_src_components_providers_tsx",
-      "community": 16,
+      "community": 9,
       "norm_label": "providers.tsx"
+    },
+    {
+      "label": "makeQueryClient()",
+      "file_type": "code",
+      "source_file": "decisiontwin-ui\\src\\components\\Providers.tsx",
+      "source_location": "L9",
+      "id": "providers_makequeryclient",
+      "community": 9,
+      "norm_label": "makequeryclient()"
+    },
+    {
+      "label": "getQueryClient()",
+      "file_type": "code",
+      "source_file": "decisiontwin-ui\\src\\components\\Providers.tsx",
+      "source_location": "L23",
+      "id": "providers_getqueryclient",
+      "community": 9,
+      "norm_label": "getqueryclient()"
     },
     {
       "label": "Providers()",
       "file_type": "code",
       "source_file": "decisiontwin-ui\\src\\components\\Providers.tsx",
-      "source_location": "L6",
+      "source_location": "L33",
       "id": "providers_providers",
-      "community": 16,
+      "community": 9,
       "norm_label": "providers()"
     },
     {
@@ -857,7 +866,7 @@
       "source_file": "decisiontwin-ui\\src\\lib\\api-config.ts",
       "source_location": "L1",
       "id": "decisiontwin_ui_src_lib_api_config_ts",
-      "community": 23,
+      "community": 24,
       "norm_label": "api-config.ts"
     },
     {
@@ -866,7 +875,7 @@
       "source_file": "decisiontwin-ui\\src\\store\\useAuthStore.ts",
       "source_location": "L1",
       "id": "decisiontwin_ui_src_store_useauthstore_ts",
-      "community": 24,
+      "community": 25,
       "norm_label": "useauthstore.ts"
     },
     {
@@ -875,7 +884,7 @@
       "source_file": "decisiontwin-ui\\src\\store\\useSimulationStore.ts",
       "source_location": "L1",
       "id": "decisiontwin_ui_src_store_usesimulationstore_ts",
-      "community": 25,
+      "community": 26,
       "norm_label": "usesimulationstore.ts"
     },
     {
@@ -887,7 +896,7 @@
       "captured_at": null,
       "author": "Cloud Solutions Architect (GDG Expert)",
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "decisiontwin high-level architecture & tech stack",
       "id": "decisiontwin_architecture_doc"
     },
@@ -900,7 +909,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 4,
       "norm_label": "decisiontwin 48-hour implementation plan",
       "id": "decisiontwin_implementation_plan_doc"
     },
@@ -913,7 +922,7 @@
       "captured_at": null,
       "author": "Senior Product Manager",
       "contributor": null,
-      "community": 1,
+      "community": 4,
       "norm_label": "decisiontwin product requirements document",
       "id": "decisiontwin_prd_doc"
     },
@@ -978,7 +987,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "next.js",
       "id": "decisiontwin_architecture_nextjs"
     },
@@ -991,7 +1000,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "tremor.so",
       "id": "decisiontwin_architecture_tremorso"
     },
@@ -1004,7 +1013,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 26,
+      "community": 27,
       "norm_label": "recharts",
       "id": "decisiontwin_architecture_recharts"
     },
@@ -1017,7 +1026,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "fastapi",
       "id": "decisiontwin_architecture_fastapi"
     },
@@ -1030,7 +1039,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "scikit-learn",
       "id": "decisiontwin_architecture_scikit_learn"
     },
@@ -1043,7 +1052,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "fairlearn",
       "id": "decisiontwin_architecture_fairlearn"
     },
@@ -1056,7 +1065,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "vertex ai gemini 1.5 pro",
       "id": "decisiontwin_architecture_gemini_pro"
     },
@@ -1069,7 +1078,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 1,
       "norm_label": "zustand",
       "id": "decisiontwin_architecture_zustand"
     },
@@ -1082,7 +1091,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 1,
       "norm_label": "tanstack react query",
       "id": "decisiontwin_architecture_tanstack_query"
     },
@@ -1095,7 +1104,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 27,
+      "community": 28,
       "norm_label": "tailwind css",
       "id": "decisiontwin_architecture_tailwind_css"
     },
@@ -1108,7 +1117,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 28,
+      "community": 29,
       "norm_label": "shadcn/ui",
       "id": "decisiontwin_architecture_shadcn_ui"
     },
@@ -1121,7 +1130,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "google cloud run",
       "id": "decisiontwin_architecture_cloud_run"
     },
@@ -1134,7 +1143,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "firebase hosting",
       "id": "decisiontwin_architecture_firebase_hosting"
     },
@@ -1147,7 +1156,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 29,
+      "community": 30,
       "norm_label": "docker",
       "id": "decisiontwin_architecture_docker"
     },
@@ -1160,7 +1169,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 30,
+      "community": 31,
       "norm_label": "pandas",
       "id": "decisiontwin_architecture_pandas"
     },
@@ -1186,7 +1195,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 4,
       "norm_label": "invisible bias",
       "id": "decisiontwin_prd_invisible_bias"
     },
@@ -1199,7 +1208,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 4,
       "norm_label": "digital twin",
       "id": "decisiontwin_prd_digital_twin"
     },
@@ -1212,7 +1221,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 4,
       "norm_label": "longitudinal simulation",
       "id": "decisiontwin_prd_longitudinal_simulation"
     },
@@ -1225,7 +1234,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 4,
       "norm_label": "synthetic persona generation",
       "id": "decisiontwin_prd_synthetic_persona"
     },
@@ -1238,7 +1247,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 4,
       "norm_label": "feedback loop simulation",
       "id": "decisiontwin_prd_feedback_loop"
     },
@@ -1251,7 +1260,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 4,
       "norm_label": "automated ai auditing",
       "id": "decisiontwin_prd_automated_auditing"
     },
@@ -1264,7 +1273,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "80% rule / disparate impact threshold",
       "id": "decisiontwin_prd_eighty_percent_rule"
     },
@@ -1290,7 +1299,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 4,
       "norm_label": "fintech risk officers",
       "id": "decisiontwin_prd_fintech_risk"
     },
@@ -1303,7 +1312,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 4,
       "norm_label": "hr managers",
       "id": "decisiontwin_prd_hr_managers"
     },
@@ -1316,7 +1325,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 4,
       "norm_label": "ai compliance teams",
       "id": "decisiontwin_prd_compliance_teams"
     },
@@ -1368,7 +1377,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 4,
       "norm_label": "diverging area charts for bias visualization",
       "id": "decision_twin_style_guide_diverging_charts"
     },
@@ -1381,7 +1390,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "time-travel slider",
       "id": "decision_twin_ux_journey_time_travel_slider"
     },
@@ -1407,7 +1416,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "gemini forensic audit report generation",
       "id": "decision_twin_ux_journey_audit_report"
     },
@@ -1446,7 +1455,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 4,
       "norm_label": "synthetic persona generation endpoint",
       "id": "project_status_synthetic_persona_endpoint"
     },
@@ -1459,7 +1468,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "bias simulation engine endpoint",
       "id": "project_status_bias_simulation_endpoint"
     },
@@ -1472,7 +1481,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "ai-powered forensic report endpoint",
       "id": "project_status_forensic_report_endpoint"
     },
@@ -1550,7 +1559,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "rationale: why next.js",
       "id": "decisiontwin_architecture_why_nextjs"
     },
@@ -1563,7 +1572,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "rationale: why fastapi",
       "id": "decisiontwin_architecture_why_fastapi"
     },
@@ -1576,7 +1585,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "rationale: why gemini 1.5 pro",
       "id": "decisiontwin_architecture_why_gemini"
     },
@@ -1589,7 +1598,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 1,
       "norm_label": "rationale: why zustand over redux/context",
       "id": "decisiontwin_architecture_why_zustand"
     },
@@ -1602,7 +1611,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 1,
       "norm_label": "rationale: why tanstack react query",
       "id": "decisiontwin_architecture_why_react_query"
     },
@@ -1615,7 +1624,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "rationale: why google cloud run",
       "id": "decisiontwin_architecture_why_cloud_run"
     },
@@ -1628,7 +1637,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "rationale: why firebase hosting",
       "id": "decisiontwin_architecture_why_firebase"
     },
@@ -1641,7 +1650,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "rationale: why tremor.so",
       "id": "decisiontwin_architecture_why_tremor"
     },
@@ -1654,7 +1663,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "rationale: why fairlearn",
       "id": "decisiontwin_architecture_why_fairlearn"
     }
@@ -2851,20 +2860,8 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "decisiontwin-ui\\src\\app\\page.tsx",
-      "source_location": "L56",
-      "weight": 1.0,
-      "_src": "decisiontwin_ui_src_app_page_tsx",
-      "_tgt": "page_lighttooltip",
-      "source": "decisiontwin_ui_src_app_page_tsx",
-      "target": "page_lighttooltip",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
       "source_file": "decisiontwin-ui\\src\\app\\compare\\page.tsx",
-      "source_location": "L72",
+      "source_location": "L117",
       "weight": 1.0,
       "_src": "decisiontwin_ui_src_app_compare_page_tsx",
       "_tgt": "page_runcomparison",
@@ -2876,12 +2873,12 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "decisiontwin-ui\\src\\app\\compare\\page.tsx",
-      "source_location": "L99",
+      "source_location": "L147",
       "weight": 1.0,
       "_src": "decisiontwin_ui_src_app_compare_page_tsx",
-      "_tgt": "page_togglemodel",
+      "_tgt": "page_toggle",
       "source": "decisiontwin_ui_src_app_compare_page_tsx",
-      "target": "page_togglemodel",
+      "target": "page_toggle",
       "confidence_score": 1.0
     },
     {
@@ -2924,7 +2921,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "decisiontwin-ui\\src\\app\\policy-lab\\page.tsx",
-      "source_location": "L72",
+      "source_location": "L78",
       "weight": 1.0,
       "_src": "decisiontwin_ui_src_app_policy_lab_page_tsx",
       "_tgt": "page_runlongitudinalsimulation",
@@ -2935,32 +2932,20 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "decisiontwin-ui\\src\\app\\reports\\page.tsx",
-      "source_location": "L123",
+      "source_file": "decisiontwin-ui\\src\\app\\policy-lab\\page.tsx",
+      "source_location": "L142",
       "weight": 1.0,
-      "_src": "decisiontwin_ui_src_app_reports_page_tsx",
-      "_tgt": "page_exporttocsv",
-      "source": "decisiontwin_ui_src_app_reports_page_tsx",
-      "target": "page_exporttocsv",
+      "_src": "decisiontwin_ui_src_app_policy_lab_page_tsx",
+      "_tgt": "page_runtradeoffanalysis",
+      "source": "decisiontwin_ui_src_app_policy_lab_page_tsx",
+      "target": "page_runtradeoffanalysis",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "decisiontwin-ui\\src\\app\\reports\\page.tsx",
-      "source_location": "L144",
-      "weight": 1.0,
-      "_src": "decisiontwin_ui_src_app_reports_page_tsx",
-      "_tgt": "page_generatepdfreport",
-      "source": "decisiontwin_ui_src_app_reports_page_tsx",
-      "target": "page_generatepdfreport",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "decisiontwin-ui\\src\\app\\reports\\page.tsx",
-      "source_location": "L185",
+      "source_location": "L13",
       "weight": 1.0,
       "_src": "decisiontwin_ui_src_app_reports_page_tsx",
       "_tgt": "page_formatdate",
@@ -2972,12 +2957,24 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "decisiontwin-ui\\src\\app\\reports\\page.tsx",
-      "source_location": "L195",
+      "source_location": "L18",
       "weight": 1.0,
       "_src": "decisiontwin_ui_src_app_reports_page_tsx",
-      "_tgt": "page_calculatetrend",
+      "_tgt": "page_exporttocsv",
       "source": "decisiontwin_ui_src_app_reports_page_tsx",
-      "target": "page_calculatetrend",
+      "target": "page_exporttocsv",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "decisiontwin-ui\\src\\app\\reports\\page.tsx",
+      "source_location": "L33",
+      "weight": 1.0,
+      "_src": "decisiontwin_ui_src_app_reports_page_tsx",
+      "_tgt": "page_exportsinglereport",
+      "source": "decisiontwin_ui_src_app_reports_page_tsx",
+      "target": "page_exportsinglereport",
       "confidence_score": 1.0
     },
     {
@@ -3008,12 +3005,48 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "decisiontwin-ui\\src\\components\\Providers.tsx",
-      "source_location": "L6",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_src": "decisiontwin_ui_src_components_providers_tsx",
+      "_tgt": "providers_makequeryclient",
+      "source": "decisiontwin_ui_src_components_providers_tsx",
+      "target": "providers_makequeryclient",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "decisiontwin-ui\\src\\components\\Providers.tsx",
+      "source_location": "L23",
+      "weight": 1.0,
+      "_src": "decisiontwin_ui_src_components_providers_tsx",
+      "_tgt": "providers_getqueryclient",
+      "source": "decisiontwin_ui_src_components_providers_tsx",
+      "target": "providers_getqueryclient",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "decisiontwin-ui\\src\\components\\Providers.tsx",
+      "source_location": "L33",
       "weight": 1.0,
       "_src": "decisiontwin_ui_src_components_providers_tsx",
       "_tgt": "providers_providers",
       "source": "decisiontwin_ui_src_components_providers_tsx",
       "target": "providers_providers",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "decisiontwin-ui\\src\\components\\Providers.tsx",
+      "source_location": "L26",
+      "weight": 1.0,
+      "_src": "providers_getqueryclient",
+      "_tgt": "providers_makequeryclient",
+      "source": "providers_makequeryclient",
+      "target": "providers_getqueryclient",
       "confidence_score": 1.0
     },
     {

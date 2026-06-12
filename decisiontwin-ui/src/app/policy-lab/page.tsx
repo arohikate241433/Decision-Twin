@@ -298,7 +298,7 @@ export default function PolicyLab() {
 
             <button
               onClick={runLongitudinalSimulation}
-              disabled={runSimulation.isPending}
+              disabled={isRunningLongitudinal}
               className="btn-primary w-full py-3 rounded-xl flex items-center justify-center gap-2 text-sm disabled:opacity-50"
             >
               {isRunningLongitudinal

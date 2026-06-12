@@ -1,11 +1,11 @@
 # Graph Report - Solution Challange 2026  (2026-06-13)
 
 ## Corpus Check
-- 25 files · ~23,230 words
+- 25 files · ~24,355 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 154 nodes · 191 edges · 12 communities detected
+- 155 nodes · 193 edges · 14 communities detected
 - Extraction: 71% EXTRACTED · 29% INFERRED · 0% AMBIGUOUS · INFERRED: 56 edges (avg confidence: 0.69)
 - Token cost: 0 input · 0 output
 
@@ -17,11 +17,13 @@
 - [[_COMMUNITY_Community 4|Community 4]]
 - [[_COMMUNITY_Community 5|Community 5]]
 - [[_COMMUNITY_Community 6|Community 6]]
-- [[_COMMUNITY_Community 26|Community 26]]
+- [[_COMMUNITY_Community 7|Community 7]]
+- [[_COMMUNITY_Community 9|Community 9]]
 - [[_COMMUNITY_Community 27|Community 27]]
 - [[_COMMUNITY_Community 28|Community 28]]
 - [[_COMMUNITY_Community 29|Community 29]]
 - [[_COMMUNITY_Community 30|Community 30]]
+- [[_COMMUNITY_Community 31|Community 31]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `SimulationCritic` - 17 edges
@@ -58,74 +60,84 @@ Cohesion: 0.11
 Nodes (20): BaseModel, ComplianceAuditor, Ingests the simulation results, including demographics parity curves and Gemma's, generate_report(), generate_synthetic_data(), get_historical_simulations(), get_session(), OverrideRequest (+12 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.1
-Nodes (30): Dark Mode Design System, Diverging Area Charts for Bias Visualization, DecisionTwin Visual Identity & UI/UX Style Guide, Framer Motion, Glassmorphism Card Design, Semantic Ethics Color Palette, Baseline Fairness Dashboard, DecisionTwin Complete User Journey & Logic Flow (+22 more)
+Cohesion: 0.11
+Nodes (21): Dark Mode Design System, DecisionTwin Visual Identity & UI/UX Style Guide, Framer Motion, Glassmorphism Card Design, Semantic Ethics Color Palette, Baseline Fairness Dashboard, DecisionTwin Complete User Journey & Logic Flow, Dataset Upload & Feature Mapping Onboarding (+13 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.13
-Nodes (19): Gemini Forensic Audit Report Generation, Google Cloud Run, DecisionTwin High-Level Architecture & Tech Stack, FastAPI, Firebase Hosting, Vertex AI Gemini 1.5 Pro, Next.js, TanStack React Query (+11 more)
-
-### Community 3 - "Community 3"
 Cohesion: 0.16
 Nodes (9): override_decision(), Applies a human-in-the-loop override for a borderline case at a specific year., Applies mathematical state transitions based on decisions:         - Lending: ap, Calculates demographic parity ratio, difference, and disparate impact ratio., Runs the multi-year longitudinal simulation.         Applies decisions, HITL ove, Queries Gemma 2 using Vertex AI or Ollama Local API., Loads a model (.pkl or .onnx)., Performs model inference, automatically handling pipeline, sklearn models, or ON (+1 more)
 
+### Community 3 - "Community 3"
+Cohesion: 0.17
+Nodes (15): Gemini Forensic Audit Report Generation, Google Cloud Run, DecisionTwin High-Level Architecture & Tech Stack, FastAPI, Firebase Hosting, Vertex AI Gemini 1.5 Pro, Next.js, Tremor.so (+7 more)
+
 ### Community 4 - "Community 4"
+Cohesion: 0.21
+Nodes (13): Diverging Area Charts for Bias Visualization, DecisionTwin 48-Hour Implementation Plan, Automated AI Auditing, AI Compliance Teams, Digital Twin, DecisionTwin Product Requirements Document, Feedback Loop Simulation, FinTech Risk Officers (+5 more)
+
+### Community 5 - "Community 5"
 Cohesion: 0.29
 Nodes (2): Wait for the FastAPI server to be reachable., wait_for_server()
 
-### Community 5 - "Community 5"
+### Community 6 - "Community 6"
 Cohesion: 0.6
 Nodes (5): create_hiring_data(), create_lending_data(), create_scholarship_data(), main(), train_and_save_model()
 
-### Community 6 - "Community 6"
+### Community 7 - "Community 7"
 Cohesion: 0.33
 Nodes (6): Time-Travel Slider, Fairlearn, Scikit-learn, Rationale: Why Fairlearn, 80% Rule / Disparate Impact Threshold, Bias Simulation Engine Endpoint
 
-### Community 26 - "Community 26"
-Cohesion: 1.0
-Nodes (1): Recharts
+### Community 9 - "Community 9"
+Cohesion: 0.67
+Nodes (2): getQueryClient(), makeQueryClient()
 
 ### Community 27 - "Community 27"
 Cohesion: 1.0
-Nodes (1): Tailwind CSS
+Nodes (1): Recharts
 
 ### Community 28 - "Community 28"
 Cohesion: 1.0
-Nodes (1): Shadcn/UI
+Nodes (1): Tailwind CSS
 
 ### Community 29 - "Community 29"
 Cohesion: 1.0
-Nodes (1): Docker
+Nodes (1): Shadcn/UI
 
 ### Community 30 - "Community 30"
+Cohesion: 1.0
+Nodes (1): Docker
+
+### Community 31 - "Community 31"
 Cohesion: 1.0
 Nodes (1): Pandas
 
 ## Knowledge Gaps
 - **30 isolated node(s):** `Wait for the FastAPI server to be reachable.`, `Ingests the simulation results, including demographics parity curves and Gemma's`, `Ingests the base dataframe, analyzes schema and values, and generates         di`, `Fallback mock generator using simple random variations of the base dataset`, `Queries Gemma 2 using Vertex AI or Ollama Local API.` (+25 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **Thin community `Community 4`** (7 nodes): `test_domain_agnostic.py`, `Wait for the FastAPI server to be reachable.`, `test_1_cross_domain_ingestion()`, `test_2_agent1_context_adaptation()`, `test_3_agent2_dynamic_transition()`, `test_4_agent3_regulatory_shift()`, `wait_for_server()`
+- **Thin community `Community 5`** (7 nodes): `test_domain_agnostic.py`, `Wait for the FastAPI server to be reachable.`, `test_1_cross_domain_ingestion()`, `test_2_agent1_context_adaptation()`, `test_3_agent2_dynamic_transition()`, `test_4_agent3_regulatory_shift()`, `wait_for_server()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 26`** (1 nodes): `Recharts`
+- **Thin community `Community 9`** (4 nodes): `Providers.tsx`, `getQueryClient()`, `makeQueryClient()`, `Providers()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 27`** (1 nodes): `Tailwind CSS`
+- **Thin community `Community 27`** (1 nodes): `Recharts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 28`** (1 nodes): `Shadcn/UI`
+- **Thin community `Community 28`** (1 nodes): `Tailwind CSS`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 29`** (1 nodes): `Docker`
+- **Thin community `Community 29`** (1 nodes): `Shadcn/UI`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 30`** (1 nodes): `Pandas`
+- **Thin community `Community 30`** (1 nodes): `Docker`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 31`** (1 nodes): `Pandas`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `DecisionTwin High-Level Architecture & Tech Stack` connect `Community 2` to `Community 1`, `Community 6`?**
-  _High betweenness centrality (0.069) - this node is a cross-community bridge._
-- **Why does `SimulationCritic` connect `Community 3` to `Community 0`?**
-  _High betweenness centrality (0.038) - this node is a cross-community bridge._
-- **Why does `DecisionTwin Product Requirements Document` connect `Community 1` to `Community 2`?**
-  _High betweenness centrality (0.036) - this node is a cross-community bridge._
+- **Why does `DecisionTwin High-Level Architecture & Tech Stack` connect `Community 3` to `Community 1`, `Community 4`, `Community 7`?**
+  _High betweenness centrality (0.068) - this node is a cross-community bridge._
+- **Why does `SimulationCritic` connect `Community 2` to `Community 0`?**
+  _High betweenness centrality (0.037) - this node is a cross-community bridge._
+- **Why does `DecisionTwin Product Requirements Document` connect `Community 4` to `Community 1`, `Community 3`?**
+  _High betweenness centrality (0.035) - this node is a cross-community bridge._
 - **Are the 9 inferred relationships involving `SimulationCritic` (e.g. with `SyntheticDataRequest` and `OverrideRequest`) actually correct?**
   _`SimulationCritic` has 9 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 9 inferred relationships involving `ComplianceAuditor` (e.g. with `SyntheticDataRequest` and `OverrideRequest`) actually correct?**
