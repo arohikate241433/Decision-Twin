@@ -315,6 +315,13 @@ export default function Dashboard() {
             Domain:&nbsp;
             <span className="text-slate-800 capitalize">{session?.domain}</span>
           </span>
+          <Link
+            href="/ingest"
+            className="px-4 py-2 rounded border border-zinc-700 text-zinc-300 hover:bg-zinc-800 transition-colors flex items-center gap-2 text-sm"
+          >
+            <Upload className="w-4 h-4" />
+            Replace Dataset
+          </Link>
         </div>
       </header>
 
@@ -560,8 +567,8 @@ export default function Dashboard() {
                 <strong className="text-slate-700">Critique (Gemma 2 Simulation Critic):</strong>{' '}
                 {simulationResults?.gemma_critique || 'Critique unavailable.'}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* HITL Intervention Panel */}
           {simulationResults && activeYearResults && (
