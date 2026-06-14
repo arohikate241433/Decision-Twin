@@ -49,13 +49,43 @@ os.makedirs(TEMP_DIR, exist_ok=True)
 MOCK_DIR = "mock_data"
 os.makedirs(MOCK_DIR, exist_ok=True)
 
-# Generate mock datasets and models if they don't exist on startup
-try:
-    if not os.path.exists(os.path.join(MOCK_DIR, "lending_mock.csv")):
-        print("Mock data missing, generating Lending, Scholarship, and Hiring packs...")
+
+def ensure_mock_packs(mock_dir: str = MOCK_DIR, generator=None, domains=None) -> None:
+    """Ensure mock datasets and models exist and are refreshed for the current runtime."""
+    if generator is None:
         import generate_mock_data
-        generate_mock_data.main()
-        print("Mock packs generated successfully.")
+        generator = generate_mock_data.main
+
+    if domains is None:
+        domains = ("lending", "scholarship", "hiring")
+
+    missing = False
+    for domain in domains:
+        csv_path = os.path.join(mock_dir, f"{domain}_mock.csv")
+        model_path = os.path.join(mock_dir, f"{domain}_model.pkl")
+        if not os.path.exists(csv_path) or not os.path.exists(model_path):
+            missing = True
+            break
+
+    if missing:
+        print("Mock packs are missing; regenerating DecisionTwin domain packs...")
+        generator()
+        return
+
+    try:
+        import joblib
+        for domain in domains:
+            model_path = os.path.join(mock_dir, f"{domain}_model.pkl")
+            joblib.load(model_path)
+    except Exception as exc:
+        print(f"Mock pack validation failed ({exc}); regenerating DecisionTwin domain packs...")
+        generator()
+
+
+# Generate mock datasets and models on startup to keep the prototype compatible
+try:
+    ensure_mock_packs()
+    print("Mock packs verified successfully.")
 except Exception as e:
     print(f"Failed to pre-generate mock packs on startup: {e}")
 
@@ -92,13 +122,14 @@ async def upload_data(
     domain: str = Form("lending"),
     protected_attribute: str = Form("gender"),
     target_outcome: str = Form("approved"),
-    use_mock: bool = Form(False)
+    use_mock: str = Form("false")
 ):
     """
     Ingests CSV dataset and custom .pkl / .onnx models.
     Supports using pre-trained mock datasets and models if use_mock is true.
     """
     try:
+        is_mock = use_mock.lower() == "true"
         SESSION["domain"] = domain
         SESSION["protected_attribute"] = protected_attribute
         SESSION["target_outcome"] = target_outcome
@@ -106,7 +137,8 @@ async def upload_data(
         SESSION["simulation_results"] = None
         
         # 1. Handle Mock Data fallback or request
-        if use_mock or file is None:
+        if is_mock or file is None:
+            ensure_mock_packs()
             mock_csv_path = os.path.join(MOCK_DIR, f"{domain}_mock.csv")
             mock_model_path = os.path.join(MOCK_DIR, f"{domain}_model.pkl")
             
@@ -187,7 +219,7 @@ def generate_synthetic_data(request: SyntheticDataRequest):
 @app.post("/run-simulation")
 def run_simulation(
     years: int = 5,
-    generate_personas: bool = False,
+    generate_personas: str = "false",
     adversarial_count: int = 15
 ):
     """
@@ -201,12 +233,13 @@ def run_simulation(
         raise HTTPException(status_code=400, detail="No prediction model loaded. Upload a model or select a domain pack.")
 
     try:
+        do_generate = generate_personas.lower() == "true"
         SESSION["years_simulated"] = years
         df_to_simulate = SESSION["df"].copy()
         
         # Agent 1: Generate adversarial edge-case personas and append
         adversarial_personas = []
-        if generate_personas:
+        if do_generate:
             try:
                 raw_personas = persona_gen.generate_personas(
                     SESSION["df"], 
@@ -253,6 +286,13 @@ def run_simulation(
             "adversarial_personas_count": len(adversarial_personas),
             "adversarial_personas": adversarial_personas,
             "gemma_critique": results["gemma_critique"],
+            "adjustment_suggestion": results.get("adjustment_suggestion"),
+            "compliance_scorecard": results.get("compliance_scorecard"),
+            "business_impact": sim_critic.calculate_financial_impact(
+                total_applicants=results.get("total_applicants", len(SESSION["df"]) if SESSION.get("df") is not None else 0),
+                disparate_impact=results["yearly_results"][-1]["metrics"]["disparate_impact"],
+                domain=SESSION["domain"]
+            ),
             "yearly_results": [
                 {
                     "year": r["year"],
@@ -267,6 +307,105 @@ def run_simulation(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Simulation failed: {str(e)}")
+
+@app.post("/run-doppelganger")
+def run_doppelganger():
+    """
+    Runs the Dynamic Doppelgänger Test (Counterfactual Audit).
+    Returns the percentage of rejected individuals who would have been approved
+    if their protected attribute was swapped to the privileged class, along with samples.
+    """
+    if SESSION["df"] is None:
+        raise HTTPException(status_code=400, detail="No dataset uploaded in active session.")
+    if SESSION["model_path"] is None:
+        raise HTTPException(status_code=400, detail="No prediction model loaded.")
+
+    try:
+        model = sim_critic.load_model(SESSION["model_path"])
+        result = sim_critic.run_doppelganger_audit(
+            df=SESSION["df"],
+            model=model,
+            protected_attribute=SESSION["protected_attribute"],
+            target_outcome=SESSION["target_outcome"]
+        )
+        return {"status": "success", "data": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Doppelgänger audit failed: {str(e)}")
+
+
+@app.post("/run-crash-test")
+def run_crash_test(count: int = 5):
+    """
+    Agent 1: Digital Crash-Test Dummies.
+    Generates intersectional edge-case synthetic personas via Gemini and runs the
+    uploaded ML model against them to expose hidden bias before deployment.
+    """
+    if SESSION["df"] is None:
+        raise HTTPException(status_code=400, detail="No dataset uploaded in active session.")
+    if SESSION["model_path"] is None:
+        raise HTTPException(status_code=400, detail="No prediction model loaded.")
+
+    try:
+        import joblib
+        columns = list(SESSION["df"].columns)
+        domain = SESSION["domain"]
+        target_outcome = SESSION["target_outcome"]
+
+        # Step 1: Generate crash-test dummies via Agent 1
+        dummies = persona_gen.generate_crash_test_dummies(
+            columns=columns,
+            domain=domain,
+            count=count
+        )
+
+        # Step 2: Load the model
+        model = joblib.load(SESSION["model_path"])
+
+        # Step 3: Build a DataFrame from dummy traits and predict
+        outcome_cols = {target_outcome, "approved", "hired", "selected"}
+        enriched_dummies = []
+
+        for dummy in dummies:
+            traits = dummy.get("traits", {})
+            # Filter to only model-known columns (exclude outcome col)
+            feature_cols = [c for c in columns if c not in outcome_cols]
+            row = {col: traits.get(col, SESSION["df"][col].mode()[0] if col in SESSION["df"].columns else 0)
+                   for col in feature_cols}
+
+            try:
+                row_df = pd.DataFrame([row])
+                # Align dtypes with training data
+                for col in feature_cols:
+                    if col in SESSION["df"].columns:
+                        try:
+                            if pd.api.types.is_numeric_dtype(SESSION["df"][col]):
+                                row_df[col] = pd.to_numeric(row_df[col], errors='coerce').fillna(0)
+                            else:
+                                row_df[col] = row_df[col].astype(str)
+                        except Exception:
+                            pass
+                prediction = int(model.predict(row_df)[0])
+            except Exception as pred_err:
+                print(f"Prediction failed for dummy {dummy.get('persona_id')}: {pred_err}")
+                prediction = 0  # Default to rejected on error
+
+            enriched_dummies.append({
+                **dummy,
+                "predicted_outcome": prediction,
+                "adversarial_description": dummy.get("adversarial_description", dummy.get("metadata", {}).get("reason", "Intersectional edge case"))
+            })
+
+        crashed_count = sum(1 for d in enriched_dummies if d["predicted_outcome"] == 0)
+
+        return {
+            "status": "success",
+            "dummies": enriched_dummies,
+            "crashed_count": crashed_count,
+            "total_count": len(enriched_dummies)
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Crash test failed: {str(e)}")
 
 class OverrideRequest(BaseModel):
     year: int
@@ -305,6 +444,8 @@ def override_decision(request: OverrideRequest):
         return {
             "status": "success",
             "message": f"Successfully applied override at Year {year}, Index {request.row_index}.",
+            "adjustment_suggestion": results.get("adjustment_suggestion"),
+            "compliance_scorecard": results.get("compliance_scorecard"),
             "yearly_results": [
                 {
                     "year": r["year"],
@@ -318,6 +459,34 @@ def override_decision(request: OverrideRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Recalculation failed: {str(e)}")
+
+@app.get("/suggest-adjustment")
+def suggest_adjustment():
+    """Returns a Gemma-backed mitigation suggestion for the current simulation context."""
+    if SESSION["simulation_results"] is None:
+        raise HTTPException(status_code=400, detail="No simulation results found. Run a simulation first.")
+
+    suggestion = sim_critic.generate_adjustment_suggestion(
+        SESSION["simulation_results"],
+        SESSION["domain"],
+        SESSION["protected_attribute"],
+    )
+    return {"status": "success", "suggestion": suggestion}
+
+
+@app.get("/compliance-scorecard")
+def compliance_scorecard():
+    """Returns a legal-readiness scorecard for the current simulation context."""
+    if SESSION["simulation_results"] is None:
+        raise HTTPException(status_code=400, detail="No simulation results found. Run a simulation first.")
+
+    scorecard = sim_critic.generate_compliance_scorecard(
+        SESSION["simulation_results"],
+        SESSION["domain"],
+        SESSION["protected_attribute"],
+    )
+    return {"status": "success", "scorecard": scorecard}
+
 
 @app.post("/generate-report")
 def generate_report():
@@ -340,6 +509,34 @@ def generate_report():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate report: {str(e)}")
+
+
+@app.post("/generate-detailed-report")
+def generate_detailed_report():
+    """
+    Agent 3: Comprehensive Legal Audit Report (~1500 words, 7 sections).
+    Calls Gemini 1.5 Pro to generate a dense, structured legal compliance document
+    incorporating all simulation data, financial impact, and regulatory mapping.
+    """
+    if SESSION["simulation_results"] is None:
+        raise HTTPException(status_code=400, detail="No simulation results found. Run a simulation first.")
+
+    try:
+        # Build a rich context object to pass into the auditor
+        sim_data = {
+            **SESSION["simulation_results"],
+            "protected_attribute": SESSION["protected_attribute"],
+        }
+        report_text = compliance_aud.generate_comprehensive_audit(
+            simulation_data=sim_data,
+            domain=SESSION["domain"]
+        )
+        return {
+            "status": "success",
+            "report": report_text
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Detailed report generation failed: {str(e)}")
 
 @app.get("/historical-simulations")
 def get_historical_simulations():
